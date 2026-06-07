@@ -1,15 +1,274 @@
-<html>
+﻿<!DOCTYPE html>
+<html lang="th">
 <head>
- <style>
-  h1 {color:green}
- </style>
- <body>
-   <h1 style="color:Blue;background:yellow"> สวัสดี 
-   <span style="color:red"> H1 </span></h1>
-   <p>ประเทศไทยจงเจริญ </p>
-   <h1> สวัสดี H1/2 </h1>
-   <p> ประเทศทวีวัฒนา</p>
-   <h2> สวัสดี  H2 </h2>
-   <p> ประเทศกรุงเทพ </p>  
- </body>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แนะนำประเทศไทย</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1d1d1f;
+      --muted: #7a7a7a;
+      --accent: #0066cc;
+      --border: #e0e0e0;
+      --radius: 24px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+    }
+
+    .page-shell {
+      width: min(1080px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 0 0 3rem;
+    }
+
+    header {
+      padding: 3rem 0 2rem;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .logo {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 0.8rem;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    nav a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      opacity: 0.8;
+      transition: opacity 0.15s ease;
+    }
+
+    nav a:hover {
+      opacity: 1;
+    }
+
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+    }
+
+    .hero h1 {
+      margin: 0 0 1rem;
+      font-size: clamp(3rem, 5vw, 4.5rem);
+      line-height: 1.05;
+      letter-spacing: -0.5px;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 58ch;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.95rem 1.6rem;
+      margin-top: 1.75rem;
+      border-radius: 999px;
+      background: var(--accent);
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      background: #0054aa;
+    }
+
+    .section {
+      margin-top: 2rem;
+    }
+
+    .section h2 {
+      margin: 0 0 1rem;
+      font-size: clamp(2.1rem, 3vw, 2.7rem);
+      line-height: 1.12;
+      letter-spacing: -0.3px;
+    }
+
+    .section p,
+    .section ul {
+      margin: 0 0 1.5rem;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    .grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.5rem;
+    }
+
+    .card h3 {
+      margin: 0 0 0.75rem;
+      font-size: 1.1rem;
+      line-height: 1.3;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    ul {
+      padding-left: 1.25rem;
+    }
+
+    li {
+      margin-bottom: 0.75rem;
+    }
+
+    footer {
+      padding: 2rem 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 640px) {
+      .hero {
+        padding: 2rem;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="page-shell">
+    <div class="topbar">
+      <a href="#" class="logo">Thailand Guide</a>
+      <nav>
+        <a href="#culture">วัฒนธรรม</a>
+        <a href="#travel">ท่องเที่ยว</a>
+        <a href="#food">อาหาร</a>
+        <a href="#contact">ติดต่อ</a>
+      </nav>
+    </div>
+
+    <section class="hero">
+      <h1>ประเทศไทย: ความงามแห่งวัฒนธรรมและการเดินทาง</h1>
+      <p>ออกเดินทางไปยังเมืองไทยที่มีทั้งวัดสวย วิถีชีวิตที่อ่อนโยน อาหารจัดจ้าน และทิวทัศน์ที่น่าจดจำในทุกฤดูกาล</p>
+      <a href="#travel" class="button">เริ่มต้นเที่ยวไทย</a>
+    </section>
+  </header>
+
+  <main class="page-shell">
+    <section id="culture" class="section">
+      <h2>วัฒนธรรมไทย</h2>
+      <p>วัฒนธรรมไทยมีความละมุน ลึกซึ้ง และเป็นมิตร ทั้งงานประเพณี ลายศิลป์ และมารยาทที่สืบทอดมาจากรุ่นสู่รุ่น</p>
+      <div class="grid">
+        <div class="card">
+          <h3>ประเพณี</h3>
+          <p>เทศกาลอย่างสงกรานต์และลอยกระทงแสดงให้เห็นถึงความเชื่อมโยงของผู้คนกับธรรมชาติและคำสอนทางศาสนา</p>
+        </div>
+        <div class="card">
+          <h3>ศิลปะ</h3>
+          <p>งานแกะสลัก ผ้าไหม และการแสดงพื้นบ้านของไทย ถ่ายทอดเรื่องราวและวิถีชีวิตที่งดงาม</p>
+        </div>
+        <div class="card">
+          <h3>ภาษา</h3>
+          <p>ภาษาไทยมีอักษรเฉพาะตัว คำพูดที่แฝงความสุภาพ และคำทักทายอย่างสวัสดีที่อบอุ่น</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="travel" class="section">
+      <h2>สถานที่ท่องเที่ยว</h2>
+      <p>ประเทศไทยมีทุกอย่างตั้งแต่ชายหาดสีขาวบนเกาะใต้ ไปจนถึงภูเขาเขียวและวัดโบราณในภาคเหนือ</p>
+      <div class="grid">
+        <div class="card">
+          <h3>กรุงเทพฯ</h3>
+          <p>ใจกลางเมืองที่เต็มไปด้วยวัด สถาปัตยกรรม และตลาดท้องถิ่นที่ไม่รู้จบ</p>
+        </div>
+        <div class="card">
+          <h3>ภูเก็ต</h3>
+          <p>เกาะที่มีชายหาดสวย น้ำทะเลใส และบรรยากาศการพักผ่อนที่ผ่อนคลาย</p>
+        </div>
+        <div class="card">
+          <h3>เชียงใหม่</h3>
+          <p>เมืองสูงในภาคเหนือที่มีวัดโบราณ ตลาดกลางคืน และธรรมชาติรอบด้าน</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="food" class="section">
+      <h2>อาหารไทย</h2>
+      <p>อาหารไทยผสมผสานรสจัดจ้าน หวาน และเปรี้ยวอย่างสมดุล พร้อมวัตถุดิบสดใหม่จากท้องถิ่น</p>
+      <ul>
+        <li>ต้มยำกุ้ง – ซุปเผ็ดร้อนกลมกล่อม</li>
+        <li>ผัดไทย – ก๋วยเตี๋ยวผัดสไตล์ไทยที่ขึ้นชื่อ</li>
+        <li>แกงเขียวหวาน – แกงกะทิรสเข้มข้น หอมเครื่องเทศ</li>
+        <li>ส้มตำ – รสจัดด้วยพริก มะนาว และถั่วลิสง</li>
+      </ul>
+    </section>
+
+    <section id="contact" class="section">
+      <h2>ติดต่อเรา</h2>
+      <p>สอบถามข้อมูลเพิ่มเติมเกี่ยวกับสถานที่ท่องเที่ยวและวัฒนธรรมไทยผ่านช่องทางด้านล่าง</p>
+      <p>Email: info@example.com</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>แนะนำเว็บไซต์นี้สร้างขึ้นเพื่อให้คุณรู้จักและรักประเทศไทยมากขึ้น</p>
+  </footer>
+</body>
 </html>
