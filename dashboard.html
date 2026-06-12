@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Construction CRM</title>
+<style>
+:root {
+  --primary:#0066cc; --primary-lt:#e8f0fb; --primary-dk:#0054aa;
+  --ink:#1d1d1f; --ink-soft:#333; --ink-muted:#6e6e73;
+  --bg:#f5f5f7; --canvas:#fff; --border:#d2d2d7; --border-soft:#e8e8ed;
+  --green:#34c759; --orange:#ff9500; --red:#ff3b30; --purple:#5856d6;
+  --r-card:14px; --r-pill:9999px; --r-sm:8px;
+  --c-pb:#8e8e93; --c-bk:#0066cc; --c-pc:#ff9500;
+  --c-ct:#34c759; --c-cs:#ff3b30; --c-hv:#5856d6;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px}
+
+/* NAV */
+.topnav{background:#000;height:44px;display:flex;align-items:center;padding:0 1.5rem;gap:1.75rem;position:sticky;top:0;z-index:100}
+.topnav-logo{color:rgba(255,255,255,.85);font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;margin-right:auto}
+.topnav a.ni{color:rgba(255,255,255,.55);font-size:12px;text-decoration:none;transition:color .15s}
+.topnav a.ni:hover{color:rgba(255,255,255,.9)}
+.topnav a.ni.cur{color:#fff}
+.topnav a.nb{padding:5px 14px;background:var(--primary);color:#fff;border-radius:var(--r-pill);font-size:12px;font-weight:500;text-decoration:none;transition:background .15s}
+.topnav a.nb:hover{background:var(--primary-dk)}
+.nav-toggle{display:none;background:none;border:none;color:rgba(255,255,255,.8);font-size:18px;cursor:pointer;padding:4px 8px;line-height:1;flex-shrink:0}
+.topnav-links{display:flex;align-items:center;gap:1.75rem}
+
+/* SHELL */
+.shell{width:min(1080px,100%);margin:0 auto;padding:2rem 1.25rem 5rem}
+
+/* PAGE HD */
+.phd{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:1.75rem;gap:1rem;flex-wrap:wrap}
+.phd h1{font-size:26px;font-weight:600;letter-spacing:-.4px}
+.phd p{font-size:12px;color:var(--ink-muted);margin-top:.25rem}
+.phd-act{display:flex;gap:.6rem;align-items:center}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:8px 18px;border-radius:var(--r-pill);font-size:13px;font-weight:500;cursor:pointer;border:none;text-decoration:none;transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dk)}
+.btn-outline{background:var(--canvas);color:var(--ink);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--ink)}
+.btn-danger{background:var(--red);color:#fff}
+
+/* STAT ROW */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin-bottom:1.25rem}
+.scard{background:var(--canvas);border:1px solid var(--border);border-radius:var(--r-card);padding:1.1rem 1.35rem}
+.scard-num{font-size:30px;font-weight:600;letter-spacing:-.8px;line-height:1.1}
+.scard-lbl{font-size:11px;color:var(--ink-muted);margin-top:.2rem;letter-spacing:.01em}
+.scard-sub{font-size:10px;color:var(--ink-muted);margin-top:.1rem}
+
+/* PIPELINE */
+.pipeline{display:grid;grid-template-columns:repeat(6,1fr);gap:.65rem;margin-bottom:1.25rem}
+.pcol{background:var(--canvas);border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden}
+.phd2{padding:.55rem .85rem;display:flex;justify-content:space-between;align-items:center}
+.ptitle{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#fff}
+.pcount{font-size:13px;font-weight:700;color:#fff;background:rgba(255,255,255,.18);border-radius:var(--r-pill);padding:1px 7px;line-height:1.5}
+.phd2.pb{background:var(--c-pb)} .phd2.bk{background:var(--c-bk)} .phd2.pc{background:var(--c-pc)}
+.phd2.ct{background:var(--c-ct)} .phd2.cs{background:var(--c-cs)} .phd2.hv{background:var(--c-hv)}
+.pbody{padding:.55rem .7rem;display:flex;flex-direction:column;gap:.4rem;min-height:72px}
+.pitem{font-size:11px;color:var(--ink);cursor:pointer;padding:.3rem .45rem;border-radius:6px;transition:background .12s;line-height:1.3;display:flex;align-items:center;gap:.4rem}
+.pitem:hover{background:var(--bg)}
+.pdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.pempty{font-size:10px;color:var(--border);font-style:italic;text-align:center;padding:.4rem 0}
+
+/* 2-COL */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-bottom:1.25rem}
+
+/* CHART CARD */
+.cc{background:var(--canvas);border:1px solid var(--border);border-radius:var(--r-card);padding:1.1rem 1.35rem}
+.cc-title{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:.9rem;letter-spacing:.01em}
+
+/* BAR CHART */
+.bars{display:flex;flex-direction:column;gap:.55rem}
+.brow{display:grid;grid-template-columns:90px 1fr 36px;align-items:center;gap:.65rem}
+.bkey{font-size:11px;color:var(--ink);text-align:right;white-space:nowrap}
+.btrack{height:6px;background:var(--border-soft);border-radius:3px;overflow:hidden}
+.bfill{height:100%;border-radius:3px;transition:width .4s ease}
+.bval{font-size:11px;font-weight:600;color:var(--ink-soft);text-align:right}
+
+/* BUDGET */
+.bsum{display:flex;flex-direction:column}
+.brow2{display:flex;justify-content:space-between;align-items:baseline;padding:.55rem 0;border-bottom:1px solid var(--border-soft)}
+.brow2:last-child{border-bottom:none}
+.blbl{font-size:12px;color:var(--ink)}
+.bval2{font-size:13px;font-weight:600;color:var(--ink)}
+.bval2.g{color:var(--green)} .bval2.o{color:var(--orange)}
+
+/* TABLE CARD */
+.tcard{background:var(--canvas);border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden;margin-bottom:1.25rem}
+.thd{padding:.85rem 1.35rem;border-bottom:1px solid var(--border-soft);display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+.thd h2{font-size:13px;font-weight:600}
+.tsrch{display:flex;gap:.45rem;flex-wrap:wrap}
+.sbox{padding:6px 13px;border:1px solid var(--border);border-radius:var(--r-pill);font-size:12px;font-family:inherit;outline:none;width:180px;transition:border-color .15s}
+.sbox:focus{border-color:var(--primary)}
+.fsel{padding:6px 28px 6px 11px;border:1px solid var(--border);border-radius:var(--r-pill);font-size:12px;font-family:inherit;outline:none;-webkit-appearance:none;appearance:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%236e6e73'/%3E%3C/svg%3E") no-repeat right 9px center;cursor:pointer}
+.fsel:focus{border-color:var(--primary)}
+
+table{width:100%;border-collapse:collapse}
+thead th{font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-muted);padding:.6rem 1.1rem;text-align:left;background:var(--bg);border-bottom:1px solid var(--border-soft)}
+tbody td{padding:.75rem 1.1rem;font-size:13px;color:var(--ink);border-bottom:1px solid var(--border-soft);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#fafafa}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:.25rem;padding:2px 9px;border-radius:var(--r-pill);font-size:10px;font-weight:600;color:#fff;white-space:nowrap}
+.badge::before{content:"";width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.55);flex-shrink:0}
+.pb{background:var(--c-pb)} .bk{background:var(--c-bk)} .pc2{background:var(--c-pc)}
+.ct2{background:var(--c-ct)} .cs2{background:var(--c-cs)} .hv2{background:var(--c-hv)}
+
+.tpill{display:inline-block;padding:2px 8px;border-radius:var(--r-pill);font-size:10px;background:var(--bg);border:1px solid var(--border);color:var(--ink-soft)}
+.abtn{padding:3px 10px;border-radius:var(--r-pill);font-size:11px;font-weight:500;cursor:pointer;border:none;transition:all .12s;text-decoration:none;display:inline-block}
+.av{background:var(--primary-lt);color:var(--primary)} .av:hover{background:var(--primary);color:#fff}
+.ad{background:#ffeeed;color:var(--red)} .ad:hover{background:var(--red);color:#fff}
+.empty-state{text-align:center;padding:2.5rem 1rem;color:var(--ink-muted);font-size:13px}
+
+/* MODAL */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:200;padding:1rem}
+.mbg.show{display:flex}
+.modal{background:var(--canvas);border-radius:var(--r-card);width:min(700px,100%);max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.mhd{padding:1.1rem 1.35rem;border-bottom:1px solid var(--border-soft);display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
+.mhd h2{font-size:17px;font-weight:600;letter-spacing:-.2px;line-height:1.25}
+.mhd-sub{font-size:11px;color:var(--ink-muted);margin-top:.2rem}
+.mclose{background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-muted);padding:2px;line-height:1}
+.mclose:hover{color:var(--ink)}
+.mbody{padding:1.25rem 1.35rem;overflow-y:auto;flex:1}
+.msec{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin:1.25rem 0 .75rem;padding-top:1rem;border-top:1px solid var(--border-soft)}
+.msec:first-child{margin-top:0;padding-top:0;border-top:none}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem 1.25rem;margin-bottom:.5rem}
+.mf .ml{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:.2rem}
+.mf .mv{font-size:13px;color:var(--ink);line-height:1.5}
+.mf.full{grid-column:1/-1}
+.attach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:.5rem;margin-top:.5rem}
+.att{border:1px solid var(--border);border-radius:7px;overflow:hidden;cursor:pointer}
+.att img{width:100%;height:66px;object-fit:cover;display:block}
+.att-pdf{height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;background:var(--bg)}
+.att-pdf span:first-child{font-size:1.3rem}
+.att-pdf span:last-child{font-size:9px;color:var(--ink-muted);text-align:center;padding:0 4px;line-height:1.3;word-break:break-all}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--ink);color:#fff;padding:.65rem 1.1rem;border-radius:var(--r-sm);font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2);transform:translateY(100px);opacity:0;transition:all .3s;z-index:999}
+.toast.show{transform:translateY(0);opacity:1}
+
+@media(max-width:900px){.pipeline{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){
+  .nav-toggle{display:flex;margin-left:auto}
+  .topnav-links{display:none;position:fixed;top:44px;left:0;right:0;background:#111;flex-direction:column;align-items:stretch;padding:.6rem 1.5rem .8rem;gap:0;border-bottom:1px solid rgba(255,255,255,.1);z-index:99;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+  .topnav-links.open{display:flex}
+  .topnav-links .ni{padding:.65rem 0;font-size:14px;border-bottom:1px solid rgba(255,255,255,.07)}
+  .topnav-links .nb{display:block;margin:.65rem 0 .15rem;text-align:center;padding:10px}
+  .shell{padding:1.5rem 1rem 4rem}
+  .stat-row{grid-template-columns:1fr 1fr}
+  .two{grid-template-columns:1fr}
+  .pipeline{grid-template-columns:repeat(2,1fr)}
+  .mgrid{grid-template-columns:1fr}
+  .phd{flex-direction:column;align-items:flex-start}
+  .phd-act{width:100%}
+  .phd-act .btn{flex:1;justify-content:center}
+  .thd{flex-direction:column;align-items:flex-start}
+  .tsrch{width:100%}
+  .sbox{flex:1;min-width:0}
+  .mbg{padding:0;align-items:flex-end}
+  .modal{border-radius:var(--r-card) var(--r-card) 0 0;max-height:92vh;width:100%}
+  thead th:nth-child(3),tbody td:nth-child(3),
+  thead th:nth-child(7),tbody td:nth-child(7),
+  thead th:nth-child(8),tbody td:nth-child(8),
+  thead th:nth-child(9),tbody td:nth-child(9){display:none}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <a href="dashboard.html" class="topnav-logo">Construction CRM</a>
+  <button class="nav-toggle" onclick="document.getElementById('topnavLinks').classList.toggle('open')" aria-label="เมนู">☰</button>
+  <div class="topnav-links" id="topnavLinks">
+    <a href="dashboard.html" class="ni cur">Dashboard</a>
+    <a href="customer-form.html" class="ni">New Customer</a>
+    <a href="customer-card.html" class="ni">Cards</a>
+    <a href="customer-form.html" class="nb">+ เพิ่มลูกค้า</a>
+  </div>
+</nav>
+
+<div class="shell">
+
+  <div class="phd">
+    <div>
+      <h1>Dashboard</h1>
+      <p id="lastUpdate">—</p>
+    </div>
+    <div class="phd-act">
+      <button class="btn btn-outline" onclick="seedDemo()">โหลดข้อมูลตัวอย่าง</button>
+      <a href="customer-form.html" class="btn btn-primary">+ เพิ่มลูกค้าใหม่</a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-row">
+    <div class="scard"><div class="scard-num" id="stTotal">0</div><div class="scard-lbl">ลูกค้าทั้งหมด</div></div>
+    <div class="scard"><div class="scard-num" id="stActive" style="color:var(--orange)">0</div><div class="scard-lbl">กำลังดำเนินการ</div><div class="scard-sub">Pre-Book → Contracted</div></div>
+    <div class="scard"><div class="scard-num" id="stConstruct" style="color:var(--red)">0</div><div class="scard-lbl">อยู่ระหว่างก่อสร้าง</div></div>
+    <div class="scard"><div class="scard-num" id="stBudget" style="color:var(--primary)">0</div><div class="scard-lbl">มูลค่ารวม (ล้านบาท)</div></div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="pipeline" id="pipeline"></div>
+
+  <!-- Charts -->
+  <div class="two">
+    <div class="cc">
+      <div class="cc-title">Product Type</div>
+      <div class="bars" id="typeChart"></div>
+    </div>
+    <div class="cc">
+      <div class="cc-title">งบประมาณโครงการ</div>
+      <div class="bsum" id="budgetSummary"></div>
+    </div>
+  </div>
+
+  <div class="cc" style="margin-bottom:1.25rem">
+    <div class="cc-title">Responsible — ภาระงาน</div>
+    <div class="bars" id="respChart"></div>
+  </div>
+
+  <!-- Table -->
+  <div class="tcard">
+    <div class="thd">
+      <h2>รายชื่อลูกค้าทั้งหมด</h2>
+      <div class="tsrch">
+        <input class="sbox" id="searchBox" type="text" placeholder="ค้นหา..." oninput="renderTable()">
+        <select class="fsel" id="filterStatus" onchange="renderTable()">
+          <option value="">ทุกสถานะ</option>
+          <option>Pre-Book</option><option>Booked</option><option>Pre-Contract</option>
+          <option>Contracted</option><option>Construction</option><option>Handover</option>
+        </select>
+        <select class="fsel" id="filterType" onchange="renderTable()">
+          <option value="">ทุกประเภท</option>
+          <option>House</option><option>Apartment</option><option>Condo</option>
+          <option>Hotel</option><option>Others</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>ID</th><th>ลูกค้า</th><th>โทร</th><th>โครงการ</th>
+          <th>Type</th><th>Status</th><th>GFA</th><th>งบประมาณ</th><th>Follow-up</th><th></th>
+        </tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <p style="margin-bottom:1rem">ยังไม่มีข้อมูลลูกค้า</p>
+        <a href="customer-form.html" class="btn btn-primary">+ เพิ่มลูกค้าใหม่</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="mbg" id="mbg" onclick="closeMBg(event)">
+  <div class="modal">
+    <div class="mhd">
+      <div>
+        <h2 id="mName">—</h2>
+        <div class="mhd-sub" id="mSub">—</div>
+      </div>
+      <button class="mclose" onclick="closeModal()">✕</button>
+    </div>
+    <div class="mbody" id="mbody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DB_KEY = 'crm_customers';
+const STATUSES = ['Pre-Book','Booked','Pre-Contract','Contracted','Construction','Handover'];
+const TYPES    = ['House','Apartment','Condo','Hotel','Others'];
+const SC = {'Pre-Book':'pb','Booked':'bk','Pre-Contract':'pc2','Contracted':'ct2','Construction':'cs2','Handover':'hv2'};
+const PC = {'Pre-Book':'pb','Booked':'bk','Pre-Contract':'pc','Contracted':'ct','Construction':'cs','Handover':'hv'};
+const TC = {House:'#0066cc',Apartment:'#34c759',Condo:'#ff9500',Hotel:'#5856d6',Others:'#8e8e93'};
+
+const $  = id => document.getElementById(id);
+function getDB(){ try{return JSON.parse(localStorage.getItem(DB_KEY))||[];}catch{return[];} }
+function fmt(n){ return n==null||n===''?'—':Number(n).toLocaleString('th-TH'); }
+function fmtM(n){ return n==null||n===''?'0':(Number(n)/1e6).toFixed(1); }
+
+function render(){
+  const all = getDB();
+  $('lastUpdate').textContent = `ข้อมูล ณ ${new Date().toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})} · ${all.length} รายการ`;
+  renderStats(all); renderPipeline(all); renderTypeChart(all); renderBudget(all); renderRespChart(all); renderTable();
+}
+
+function renderStats(all){
+  $('stTotal').textContent    = all.length;
+  $('stActive').textContent   = all.filter(c=>['Pre-Book','Booked','Pre-Contract','Contracted'].includes(c.status)).length;
+  $('stConstruct').textContent= all.filter(c=>c.status==='Construction').length;
+  $('stBudget').textContent   = fmtM(all.reduce((s,c)=>s+(Number(c.budget)||0),0));
+}
+
+function renderPipeline(all){
+  $('pipeline').innerHTML = STATUSES.map(s=>{
+    const list = all.filter(c=>c.status===s);
+    const items = list.slice(0,6).map(c=>
+      `<div class="pitem" onclick="openModal('${c.id}')"><span class="pdot" style="background:${TC[c.productType]||'#ccc'}"></span>${c.name}</div>`
+    ).join('');
+    return `<div class="pcol">
+      <div class="phd2 ${PC[s]}"><span class="ptitle">${s}</span><span class="pcount">${list.length}</span></div>
+      <div class="pbody">${items||'<div class="pempty">ว่าง</div>'}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTypeChart(all){
+  const cnt={};TYPES.forEach(t=>cnt[t]=0);
+  all.forEach(c=>{if(c.productType)cnt[c.productType]=(cnt[c.productType]||0)+1;});
+  const mx=Math.max(...Object.values(cnt),1);
+  $('typeChart').innerHTML=TYPES.map(t=>`
+    <div class="brow">
+      <span class="bkey">${t}</span>
+      <div class="btrack"><div class="bfill" style="width:${(cnt[t]/mx*100).toFixed(1)}%;background:${TC[t]}"></div></div>
+      <span class="bval">${cnt[t]}</span>
+    </div>`).join('');
+}
+
+function renderBudget(all){
+  const total = all.reduce((s,c)=>s+(Number(c.budget)||0),0);
+  const count = all.filter(c=>c.budget).length;
+  const avg   = count>0?Math.round(total/count):0;
+  const pitchTotal = all.reduce((s,c)=>s+(Number(c.pitchPrice)||0),0);
+  $('budgetSummary').innerHTML=`
+    <div class="brow2"><span class="blbl">งบประมาณรวมทุกโครงการ</span><span class="bval2">${fmt(total)} บาท</span></div>
+    <div class="brow2"><span class="blbl">ราคานำเสนอรวม (Pitch)</span><span class="bval2 o">${fmt(pitchTotal)} บาท</span></div>
+    <div class="brow2"><span class="blbl">งบเฉลี่ยต่อโครงการ</span><span class="bval2">${fmt(avg)} บาท</span></div>
+    <div class="brow2"><span class="blbl">จำนวนโครงการที่มีงบ</span><span class="bval2 g">${count} โครงการ</span></div>`;
+}
+
+function renderRespChart(all){
+  const cnt={};
+  all.forEach(c=>{
+    ['arch1','arch2','bd','construct','sales'].forEach(k=>{
+      const n=c.responsible?.[k]; if(n){cnt[n]=(cnt[n]||0)+1;}
+    });
+  });
+  const entries=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const mx=entries[0]?.[1]||1;
+  $('respChart').innerHTML=entries.length?entries.map(([n,v])=>`
+    <div class="brow">
+      <span class="bkey">${n}</span>
+      <div class="btrack"><div class="bfill" style="width:${(v/mx*100).toFixed(1)}%;background:var(--primary)"></div></div>
+      <span class="bval">${v}</span>
+    </div>`).join(''):'<div style="font-size:12px;color:var(--ink-muted)">ยังไม่มีข้อมูล</div>';
+}
+
+function renderTable(){
+  const q  = $('searchBox').value.toLowerCase();
+  const fs = $('filterStatus').value;
+  const ft = $('filterType').value;
+  const data = getDB().filter(c=>{
+    const m = c.name?.toLowerCase().includes(q)||c.phone?.includes(q)||c.projectName?.toLowerCase().includes(q)||c.id?.includes(q);
+    return m&&(!fs||c.status===fs)&&(!ft||c.productType===ft);
+  });
+  const tb=$('tableBody'), em=$('emptyState');
+  if(!data.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  const fu = d => d?new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short'}):'—';
+  tb.innerHTML=data.map(c=>`<tr>
+    <td style="font-size:10px;color:var(--ink-muted);font-family:monospace;white-space:nowrap">${c.id}</td>
+    <td><div style="font-size:13px;font-weight:500">${c.name}</div>${c.company?`<div style="font-size:11px;color:var(--ink-muted)">${c.company}</div>`:''}</td>
+    <td style="font-size:12px;color:var(--ink-muted)">${c.phone||'—'}</td>
+    <td><div style="font-size:12px">${c.projectName||'—'}</div>${c.projectLocation?`<div style="font-size:10px;color:var(--ink-muted)">${c.projectLocation}</div>`:''}</td>
+    <td><span class="tpill">${c.productType||'—'}</span></td>
+    <td><span class="badge ${SC[c.status]||'pb'}">${c.status}</span></td>
+    <td style="font-size:12px;color:var(--ink-muted)">${c.area?c.area+' ตร.ม.':'—'}</td>
+    <td style="font-size:12px;color:var(--ink-muted)">${c.budget?fmtM(c.budget)+' ล.':'—'}</td>
+    <td style="font-size:12px;color:var(--ink-muted)">${fu(c.followUpDate)}</td>
+    <td style="white-space:nowrap">
+      <button class="abtn av" onclick="openModal('${c.id}')">ดู</button>
+      <a class="abtn av" href="customer-form.html?edit=${c.id}">แก้ไข</a>
+      <button class="abtn ad" onclick="deleteCustomer('${c.id}')">ลบ</button>
+    </td>
+  </tr>`).join('');
+}
+
+function openModal(id){
+  const c=getDB().find(x=>x.id===id); if(!c) return;
+  $('mName').textContent=c.name;
+  $('mSub').textContent=`${c.id} · ${c.productType||'—'}`;
+  const sc=SC[c.status]||'pb';
+  const isHouse=c.productType==='House';
+  const isBuilding=['Apartment','Condo','Hotel'].includes(c.productType);
+
+  const houseHtml = isHouse?`
+    <div class="msec">ข้อมูลออกแบบ — House</div>
+    <div class="mgrid">
+      ${mf('จำนวนชั้น',c.hFloors)} ${mf('ห้องนอน',c.hBedrooms)}
+      ${mf('ห้องน้ำ',c.hBathrooms)} ${mf('ที่จอดรถ',c.hParking?c.hParking+' คัน':'')}
+    </div>
+    ${c.hExtra?`<div class="mf full"><div class="ml">คำขอเพิ่มเติม</div><div class="mv">${c.hExtra}</div></div>`:''}`:''
+
+  const buildHtml = isBuilding?`
+    <div class="msec">ข้อมูลออกแบบ — ${c.productType}</div>
+    <div class="mgrid">
+      ${mf('จำนวนชั้น',c.bFloors)} ${mf('จำนวนห้องพัก',c.bUnits?c.bUnits+' ยูนิต':'')}
+      ${mf('Lift',c.bLifts?c.bLifts+' ตัว':'')} ${mf('Air',c.bAir)}
+      ${mf('Furniture',c.bFurniture)} ${mf('น้ำอุ่น',c.bWaterHeater)}
+    </div>
+    ${c.bExtra?`<div class="mf full"><div class="ml">คำขอเพิ่มเติม</div><div class="mv">${c.bExtra}</div></div>`:''}`:''
+
+  const pitchHtml = (c.pitchPrice||c.pitchFiles?.length)?`
+    <div class="msec">Pitch Deck</div>
+    <div class="mgrid">
+      ${mf('ราคานำเสนอ',c.pitchPrice?fmt(c.pitchPrice)+' บาท':'')}
+      ${mf('บาท/ตร.ม.',c.pitchPricePerSqm?fmt(c.pitchPricePerSqm):'—')}
+    </div>
+    ${(c.pitchFiles||[]).length?`<div class="attach-grid">${c.pitchFiles.map(f=>`
+      <div class="att" onclick="openFile('${f.data}')"><div class="att-pdf"><span>📄</span><span>${f.name}</span></div></div>`).join('')}</div>`:''}`:''
+
+  const attHtml = (c.attachments||[]).length?`
+    <div class="msec">ไฟล์แนบ (${c.attachments.length})</div>
+    <div class="attach-grid">${c.attachments.map(f=>
+      f.type?.startsWith('image/')
+        ?`<div class="att" onclick="window.open('${f.data}')"><img src="${f.data}" alt="${f.name}"></div>`
+        :`<div class="att" onclick="openFile('${f.data}')"><div class="att-pdf"><span>📄</span><span>${f.name}</span></div></div>`
+    ).join('')}</div>`:'';
+
+  $('mbody').innerHTML=`
+    <span class="badge ${sc}" style="display:inline-flex;margin-bottom:1rem">${c.status}</span>
+
+    <div class="msec">ข้อมูลลูกค้า</div>
+    <div class="mgrid">
+      ${mf('เบอร์โทร',c.phone)} ${mf('อีเมล',c.email)}
+      ${mf('Line ID',c.lineId)} ${mf('แหล่งที่มา',c.source)}
+      <div class="mf full"><div class="ml">ที่อยู่</div><div class="mv">${c.address||'—'}</div></div>
+      ${c.customerNote?`<div class="mf full"><div class="ml">หมายเหตุ</div><div class="mv">${c.customerNote}</div></div>`:''}
+    </div>
+
+    <div class="msec">ข้อมูลโครงการ</div>
+    <div class="mgrid">
+      <div class="mf full"><div class="ml">ชื่อโครงการ</div><div class="mv">${c.projectName||'—'}</div></div>
+      ${mf('ที่ตั้ง',c.projectLocation)}
+      ${c.googleMapLink?`<div class="mf"><div class="ml">Google Map</div><div class="mv"><a href="${c.googleMapLink}" target="_blank" style="color:var(--primary);font-size:13px">เปิดแผนที่</a></div></div>`:mf('Google Map','—')}
+      ${mf('ขนาดที่ดิน',c.landArea?c.landArea+' ตร.วา':'')}
+      ${mf('GFA พื้นที่ใช้สอย',c.area?c.area+' ตร.ม.':'')}
+      ${mf('งบประมาณ',c.budget?fmt(c.budget)+' บาท':'')}
+      ${mf('บาท/ตร.ม.',c.budgetPerSqm?fmt(c.budgetPerSqm):'')}
+      ${mf('วันที่เริ่มต้น',c.startDate)} ${mf('Follow-up',c.followUpDate)}
+    </div>
+    ${c.requirements?`<div class="mf" style="margin-bottom:.75rem"><div class="ml">ความต้องการพิเศษ / ข้อจำกัด</div><div class="mv" style="white-space:pre-wrap">${c.requirements}</div></div>`:''}
+
+    ${houseHtml}${buildHtml}
+
+    <div class="msec">Responsible Team</div>
+    <div class="mgrid">
+      ${mf('Architect 1',c.responsible?.arch1)} ${mf('Architect 2',c.responsible?.arch2)}
+      ${mf('BD',c.responsible?.bd)} ${mf('Construction',c.responsible?.construct)}
+      ${mf('Sales',c.responsible?.sales)}
+    </div>
+
+    ${pitchHtml}${attHtml}
+
+    <div style="margin-top:1.25rem;display:flex;gap:.5rem">
+      <a href="customer-form.html?edit=${c.id}" class="btn btn-primary" style="font-size:12px">แก้ไข</a>
+      <button class="btn btn-outline" onclick="deleteCustomer('${c.id}')" style="font-size:12px">ลบ</button>
+      <a href="customer-card.html" class="btn btn-outline" style="font-size:12px">Card View</a>
+    </div>`;
+  $('mbg').classList.add('show');
+}
+function mf(l,v){ return `<div class="mf"><div class="ml">${l}</div><div class="mv">${v||'—'}</div></div>`; }
+function openFile(d){ const w=window.open();w.document.write(`<iframe src="${d}" style="width:100%;height:100%;border:none"></iframe>`); }
+function closeModal(){ $('mbg').classList.remove('show'); }
+function closeMBg(e){ if(e.target===$('mbg')) closeModal(); }
+
+function deleteCustomer(id){
+  if(!confirm('ลบข้อมูลลูกค้านี้?')) return;
+  localStorage.setItem(DB_KEY,JSON.stringify(getDB().filter(c=>c.id!==id)));
+  closeModal(); toast('ลบข้อมูลเรียบร้อย'); render();
+}
+
+function toast(msg){
+  const t=$('toast'); t.textContent=msg;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function seedDemo(){
+  if(getDB().length&&!confirm('มีข้อมูลอยู่แล้ว ต้องการเพิ่มข้อมูลตัวอย่างหรือไม่?')) return;
+  const demo=[
+    {id:'CRM-2026-D001',name:'คุณอัมรินทร์ วงศ์สมบูรณ์',company:'วงศ์สมบูรณ์ พร็อพเพอร์ตี้',phone:'081-234-5678',email:'amarin@ws.co.th',lineId:'@amarin',address:'123 ถ.สุขุมวิท 49 กรุงเทพฯ',source:'Referral',customerNote:'ลูกค้า VIP นัดหมายแล้ว',projectName:'บ้านเดี่ยว 2 ชั้น ลาดพร้าว',projectLocation:'ลาดพร้าว ซอย 87',googleMapLink:'',landArea:'100',area:'320',budget:'8500000',budgetPerSqm:'26563',startDate:'2026-06-01',followUpDate:'2026-06-25',productType:'House',status:'Pre-Book',hFloors:'2',hBedrooms:'4',hBathrooms:'4',hParking:'2',hExtra:'Smart Home, ห้องทำงาน',requirements:'ต้องการวัสดุพรีเมียม ไม้จริงทุกพื้น',pitchPrice:'9200000',pitchPricePerSqm:'28750',responsible:{arch1:'สมชาย ดีไซน์',arch2:'',bd:'วิภา ธุรกิจ',construct:'',sales:'ธนา เซลส์'},attachments:[],pitchFiles:[],createdAt:'2026-06-11',updatedAt:'2026-06-11'},
+    {id:'CRM-2026-D002',name:'คุณปริยา เจริญสุข',company:'',phone:'089-876-5432',email:'pariya@gmail.com',lineId:'pariya_c',address:'456 ถ.พหลโยธิน กรุงเทพฯ',source:'Walk-in',customerNote:'',projectName:'คอนโด สุขุมวิท 24',projectLocation:'สุขุมวิท ซอย 24',googleMapLink:'',landArea:'',area:'65',budget:'3200000',budgetPerSqm:'49231',startDate:'2026-05-03',followUpDate:'2026-06-25',productType:'Condo',status:'Contracted',bFloors:'14',bUnits:'1',bLifts:'',bAir:'Full (ทุกห้อง)',bFurniture:'Fully Furnished',bWaterHeater:'ทุกห้อง (Electric)',bExtra:'Built-in ครบชุด',requirements:'พื้นไม้จริง, Built-in kitchen',pitchPrice:'3500000',pitchPricePerSqm:'53846',responsible:{arch1:'สมชาย ดีไซน์',arch2:'ณัฐพงษ์ แบบบ้าน',bd:'วิภา ธุรกิจ',construct:'',sales:'ธนา เซลส์'},attachments:[],pitchFiles:[],createdAt:'2026-05-20',updatedAt:'2026-06-10'},
+    {id:'CRM-2026-D003',name:'บริษัท เฮเว่น โฮเทล จำกัด',company:'เฮเว่น โฮเทล',phone:'02-345-6789',email:'info@heaven.co.th',lineId:'@heavenhotel',address:'789 ถ.เพชรบุรี กรุงเทพฯ',source:'Exhibition',customerNote:'ติดต่อผ่าน Expo 2026',projectName:'โรงแรม Boutique',projectLocation:'อารีย์ กรุงเทพฯ',googleMapLink:'',landArea:'400',area:'2400',budget:'45000000',budgetPerSqm:'18750',startDate:'2026-03-01',followUpDate:'2026-07-01',productType:'Hotel',status:'Construction',bFloors:'5',bUnits:'30',bLifts:'2',bAir:'Full (ทุกห้อง)',bFurniture:'Fully Furnished',bWaterHeater:'Solar Water Heater',bExtra:'Pool, Gym, Rooftop Bar',requirements:'มาตรฐาน 4 ดาว',pitchPrice:'48000000',pitchPricePerSqm:'20000',responsible:{arch1:'สมชาย ดีไซน์',arch2:'ณัฐพงษ์ แบบบ้าน',bd:'วิภา ธุรกิจ',construct:'ทีมก่อสร้าง A',sales:''},attachments:[],pitchFiles:[],createdAt:'2026-02-15',updatedAt:'2026-06-01'},
+    {id:'CRM-2026-D004',name:'คุณธนกฤต ศรีสุวรรณ',company:'',phone:'085-111-2222',email:'thanakrit@mail.com',lineId:'',address:'321 ถ.รามคำแหง กรุงเทพฯ',source:'Referral',customerNote:'',projectName:'อพาร์ทเม้นท์ 8 ชั้น',projectLocation:'รามคำแหง 53',googleMapLink:'',landArea:'200',area:'1800',budget:'28000000',budgetPerSqm:'15556',startDate:'',followUpDate:'2026-06-20',productType:'Apartment',status:'Booked',bFloors:'8',bUnits:'40',bLifts:'1',bAir:'Partial (บางห้อง)',bFurniture:'Partially Furnished',bWaterHeater:'ทุกห้อง (Electric)',bExtra:'ที่จอดรถใต้ดิน',requirements:'รอเอกสารที่ดิน',pitchPrice:'30000000',pitchPricePerSqm:'16667',responsible:{arch1:'',arch2:'ณัฐพงษ์ แบบบ้าน',bd:'วิภา ธุรกิจ',construct:'',sales:'ธนา เซลส์'},attachments:[],pitchFiles:[],createdAt:'2026-06-05',updatedAt:'2026-06-10'},
+    {id:'CRM-2026-D005',name:'คุณมาลี รักไทย',company:'',phone:'091-555-4444',email:'malee@email.com',lineId:'',address:'555 ถ.รัชดาภิเษก กรุงเทพฯ',source:'Social Media',customerNote:'',projectName:'บ้านเดี่ยว มีนบุรี',projectLocation:'มีนบุรี กรุงเทพฯ',googleMapLink:'',landArea:'60',area:'180',budget:'4200000',budgetPerSqm:'23333',startDate:'2025-10-01',followUpDate:'2026-06-30',productType:'House',status:'Handover',hFloors:'2',hBedrooms:'3',hBathrooms:'3',hParking:'1',hExtra:'สวนหลังบ้าน',requirements:'',pitchPrice:'4500000',pitchPricePerSqm:'25000',responsible:{arch1:'สมชาย ดีไซน์',arch2:'',bd:'วิภา ธุรกิจ',construct:'ทีมก่อสร้าง B',sales:'ธนา เซลส์'},attachments:[],pitchFiles:[],createdAt:'2025-09-01',updatedAt:'2026-06-08'},
+  ];
+  localStorage.setItem(DB_KEY,JSON.stringify([...getDB(),...demo]));
+  toast('โหลดข้อมูลตัวอย่างเรียบร้อย'); render();
+}
+
+window.addEventListener('DOMContentLoaded',render);
+window.addEventListener('storage',render);
+</script>
+</body>
+</html>
