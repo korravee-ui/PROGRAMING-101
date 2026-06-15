@@ -95,9 +95,9 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
 
 /* Status chips (used on dark bg) */
 .chips.status-chips span{color:rgba(255,255,255,.55);border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.05)}
+.chips.status-chips input:checked+span.snp {background:#c7c7cc;border-color:#c7c7cc;color:#fff}
 .chips.status-chips input:checked+span.sp  {background:#8e8e93;border-color:#8e8e93;color:#fff}
 .chips.status-chips input:checked+span.sb  {background:var(--primary);border-color:var(--primary);color:#fff}
-.chips.status-chips input:checked+span.spc {background:var(--orange);border-color:var(--orange);color:#fff}
 .chips.status-chips input:checked+span.sc  {background:var(--green);border-color:var(--green);color:#fff}
 .chips.status-chips input:checked+span.ss  {background:var(--red);border-color:var(--red);color:#fff}
 .chips.status-chips input:checked+span.sh  {background:var(--purple);border-color:var(--purple);color:#fff}
@@ -277,9 +277,9 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
       <div class="card-hd"><h2>Project Status</h2></div>
       <div class="card-body">
         <div class="chips status-chips">
+          <label><input type="radio" name="status" value="Non-Poten"><span class="snp">Non-Poten</span></label>
           <label><input type="radio" name="status" value="Pre-Book" checked><span class="sp">Pre-Book</span></label>
           <label><input type="radio" name="status" value="Booked"><span class="sb">Booked</span></label>
-          <label><input type="radio" name="status" value="Pre-Contract"><span class="spc">Pre-Contract</span></label>
           <label><input type="radio" name="status" value="Contracted"><span class="sc">Contracted</span></label>
           <label><input type="radio" name="status" value="Construction"><span class="ss">Construction</span></label>
           <label><input type="radio" name="status" value="Handover"><span class="sh">Handover</span></label>
@@ -740,7 +740,7 @@ const TMPL_COLS = [
   {h:'ที่ตั้งโครงการ',           k:'projectLocation'},
   {h:'วันที่เริ่มต้น',           k:'startDate',  note:'YYYY-MM-DD'},
   {h:'นัดหมายครั้งถัดไป',       k:'followUpDate',note:'YYYY-MM-DD'},
-  {h:'Project Status',          k:'status',    note:'Pre-Book / Booked / Pre-Contract / Contracted / Construction / Handover'},
+  {h:'Project Status',          k:'status',    note:'Non-Poten / Pre-Book / Booked / Contracted / Construction / Handover'},
   {h:'Product Type',            k:'productType',note:'House / Apartment / Condo / Hotel / Others'},
   {h:'ขนาดที่ดิน (ตร.วา)',      k:'landArea'},
   {h:'GFA พื้นที่ใช้สอย (ตร.ม.)',k:'area'},
@@ -748,7 +748,9 @@ const TMPL_COLS = [
   {h:'ราคานำเสนอ (บาท)',        k:'pitchPrice'},
   {h:'ความต้องการพิเศษ',        k:'requirements'},
   {h:'Architect 1',             k:'arch1'},
+  {h:'สถานะออกแบบ A1',         k:'arch1Status', note:'Concept Design 1 / Concept Design 2 / Prelim Design / Design Develop / For Permit / For Const'},
   {h:'Architect 2',             k:'arch2'},
+  {h:'สถานะออกแบบ A2',         k:'arch2Status', note:'Concept Design 1 / Concept Design 2 / Prelim Design / Design Develop / For Permit / For Const'},
   {h:'BD',                      k:'bd'},
   {h:'Construction',            k:'construct'},
   {h:'Sales',                   k:'sales'},
@@ -767,7 +769,7 @@ function downloadTemplate(){
     'Booked','House',
     '100','320','8500000','9500000',
     'ต้องการ Smart Home และสระว่ายน้ำ',
-    'นายวิชัย','นางสาวมาลี','นายสมศักดิ์','นายชัยยา','นางสาวนิภา'
+    'นายวิชัย','Prelim Design','นางสาวมาลี','Concept Design 2','นายสมศักดิ์','นายชัยยา','นางสาวนิภา'
   ];
   const ws = XLSX.utils.aoa_to_sheet([headers, notes, sample]);
   ws['!cols'] = TMPL_COLS.map(()=>({wch:26}));
@@ -867,8 +869,8 @@ function confirmImport(){
   okRows.forEach(row=>{
     const baseLen = arr.length+imported;
     const id = `CRM-${new Date().getFullYear()}-${(baseLen+1).toString().padStart(4,'0')}`;
-    const bNum = parseFloat(row.budget)||0;
-    const aNum = parseFloat(row.area)||0;
+    const bNum = parseFloat((row.budget||'').replace(/,/g,''))||0;
+    const aNum = parseFloat((row.area||'').replace(/,/g,''))||0;
     arr.push({
       id,
       name:row.name, company:row.company, phone:row.phone, email:row.email,
@@ -878,12 +880,12 @@ function confirmImport(){
       googleMapLink:'', startDate:row.startDate, followUpDate:row.followUpDate,
       productType:row.productType||'', status:row.status||'Pre-Book',
       landArea:row.landArea, area:row.area,
-      budget:row.budget, budgetPerSqm:(bNum>0&&aNum>0)?Math.round(bNum/aNum):'',
+      budget:(row.budget||'').replace(/,/g,''), budgetPerSqm:(bNum>0&&aNum>0)?Math.round(bNum/aNum):'',
       hFloors:'', hBedrooms:'', hBathrooms:'', hParking:'', hExtra:'',
       bFloors:'', bUnits:'', bLifts:'', bAir:'', bFurniture:'', bWaterHeater:'', bExtra:'',
       requirements:row.requirements,
-      pitchPrice:row.pitchPrice, pitchPricePerSqm:'',
-      responsible:{arch1:row.arch1, arch2:row.arch2, bd:row.bd, construct:row.construct, sales:row.sales},
+      pitchPrice:(row.pitchPrice||'').replace(/,/g,''), pitchPricePerSqm:'',
+      responsible:{arch1:row.arch1, arch1Status:row.arch1Status||'', arch2:row.arch2, arch2Status:row.arch2Status||'', bd:row.bd, construct:row.construct, sales:row.sales},
       attachments:[], pitchFiles:[],
       createdAt:now(), updatedAt:now()
     });

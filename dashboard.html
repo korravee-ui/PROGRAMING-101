@@ -11,7 +11,7 @@
   --bg:#f5f5f7; --canvas:#fff; --border:#d2d2d7; --border-soft:#e8e8ed;
   --green:#34c759; --orange:#ff9500; --red:#ff3b30; --purple:#5856d6;
   --r-card:14px; --r-pill:9999px; --r-sm:8px;
-  --c-pb:#8e8e93; --c-bk:#0066cc; --c-pc:#ff9500;
+  --c-np:#c7c7cc; --c-pb:#8e8e93; --c-bk:#0066cc;
   --c-ct:#34c759; --c-cs:#ff3b30; --c-hv:#5856d6;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -60,9 +60,10 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
 .ptitle{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#fff}
 .pcount{font-size:13px;font-weight:700;color:#fff;background:rgba(255,255,255,.18);border-radius:var(--r-pill);padding:1px 7px;line-height:1.5}
 .pbudget{font-size:9px;color:rgba(255,255,255,.65);margin-top:2px;white-space:nowrap}
-.phd2.pb{background:var(--c-pb)} .phd2.bk{background:var(--c-bk)} .phd2.pc{background:var(--c-pc)}
+.phd2.np{background:var(--c-np)} .phd2.pb{background:var(--c-pb)} .phd2.bk{background:var(--c-bk)}
 .phd2.ct{background:var(--c-ct)} .phd2.cs{background:var(--c-cs)} .phd2.hv{background:var(--c-hv)}
-.pbody{padding:.55rem .7rem;display:flex;flex-direction:column;gap:.4rem;min-height:72px}
+.pbody{padding:.55rem .7rem;display:flex;flex-direction:column;gap:.4rem;min-height:72px;max-height:260px;overflow-y:auto}
+.pbody::-webkit-scrollbar{width:4px}.pbody::-webkit-scrollbar-track{background:transparent}.pbody::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 .pitem{font-size:11px;color:var(--ink);cursor:pointer;padding:.3rem .45rem;border-radius:6px;transition:background .12s;line-height:1.3;display:flex;align-items:center;gap:.4rem}
 .pitem:hover{background:var(--bg)}
 .pdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
@@ -110,7 +111,7 @@ tbody tr:hover td{background:#fafafa}
 /* BADGES */
 .badge{display:inline-flex;align-items:center;gap:.25rem;padding:2px 9px;border-radius:var(--r-pill);font-size:10px;font-weight:600;color:#fff;white-space:nowrap}
 .badge::before{content:"";width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.55);flex-shrink:0}
-.pb{background:var(--c-pb)} .bk{background:var(--c-bk)} .pc2{background:var(--c-pc)}
+.np2{background:var(--c-np)} .pb{background:var(--c-pb)} .bk{background:var(--c-bk)}
 .ct2{background:var(--c-ct)} .cs2{background:var(--c-cs)} .hv2{background:var(--c-hv)}
 
 .tpill{display:inline-block;padding:2px 8px;border-radius:var(--r-pill);font-size:10px;background:var(--bg);border:1px solid var(--border);color:var(--ink-soft)}
@@ -242,7 +243,7 @@ tbody tr:hover td{background:#fafafa}
         <input class="sbox" id="searchBox" type="text" placeholder="ค้นหา..." oninput="renderTable()">
         <select class="fsel" id="filterStatus" onchange="renderTable()">
           <option value="">ทุกสถานะ</option>
-          <option>Pre-Book</option><option>Booked</option><option>Pre-Contract</option>
+          <option>Non-Poten</option><option>Pre-Book</option><option>Booked</option>
           <option>Contracted</option><option>Construction</option><option>Handover</option>
         </select>
         <select class="fsel" id="filterType" onchange="renderTable()">
@@ -287,10 +288,10 @@ tbody tr:hover td{background:#fafafa}
 
 <script>
 const DB_KEY = 'crm_customers';
-const STATUSES = ['Pre-Book','Booked','Pre-Contract','Contracted','Construction','Handover'];
+const STATUSES = ['Non-Poten','Pre-Book','Booked','Contracted','Construction','Handover'];
 const TYPES    = ['House','Apartment','Condo','Hotel','Others'];
-const SC = {'Pre-Book':'pb','Booked':'bk','Pre-Contract':'pc2','Contracted':'ct2','Construction':'cs2','Handover':'hv2'};
-const PC = {'Pre-Book':'pb','Booked':'bk','Pre-Contract':'pc','Contracted':'ct','Construction':'cs','Handover':'hv'};
+const SC = {'Non-Poten':'np2','Pre-Book':'pb','Booked':'bk','Contracted':'ct2','Construction':'cs2','Handover':'hv2'};
+const PC = {'Non-Poten':'np','Pre-Book':'pb','Booked':'bk','Contracted':'ct','Construction':'cs','Handover':'hv'};
 const TC = {House:'#0066cc',Apartment:'#34c759',Condo:'#ff9500',Hotel:'#5856d6',Others:'#8e8e93'};
 
 const $  = id => document.getElementById(id);
@@ -307,7 +308,7 @@ function render(){
 
 function renderStats(all){
   $('stTotal').textContent    = all.length;
-  $('stActive').textContent   = all.filter(c=>['Pre-Book','Booked','Pre-Contract','Contracted'].includes(c.status)).length;
+  $('stActive').textContent   = all.filter(c=>['Pre-Book','Booked','Contracted'].includes(c.status)).length;
   $('stConstruct').textContent= all.filter(c=>c.status==='Construction').length;
   $('stBudget').textContent   = fmtM(all.reduce((s,c)=>s+(Number(c.budget)||0),0));
 }
@@ -316,7 +317,7 @@ function renderPipeline(all){
   $('pipeline').innerHTML = STATUSES.map(s=>{
     const list = all.filter(c=>c.status===s);
     const totalBudget = list.reduce((sum,c)=>sum+(Number(c.budget)||0),0);
-    const items = list.slice(0,6).map(c=>
+    const items = list.map(c=>
       `<div class="pitem" onclick="openModal('${c.id}')"><span class="pdot" style="background:${TC[c.productType]||'#ccc'}"></span>${c.name}</div>`
     ).join('');
     return `<div class="pcol">
@@ -373,6 +374,11 @@ function renderStatusDesignMatrix(all){
       stages:[{name:'For Permit',c:'#ff9500'},{name:'For Const',c:'#ff3b30'}],
       hColor:'#34c759'
     },
+    {
+      status:'Construction',
+      stages:[{name:'For Permit',c:'#ff9500'},{name:'For Const',c:'#ff3b30'}],
+      hColor:'#ff3b30'
+    },
   ];
 
   // Primary design stage: arch1Status first, else arch2Status
@@ -428,11 +434,11 @@ function renderStatusDesignMatrix(all){
   }).join('');
 
   $('statusDesignChart').innerHTML=`
-    <div class="sdm-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem">
+    <div class="sdm-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem">
       ${cols}
     </div>
     <div style="font-size:10px;color:var(--ink-muted);margin-top:.65rem">
-      Pre-Book → CD1/CD2 &nbsp;·&nbsp; Booked → Prelim/DD &nbsp;·&nbsp; Contracted → FP/FC &nbsp;|&nbsp; แสดงสถานะของ Architect 1 เป็นหลัก
+      Pre-Book → CD1/CD2 &nbsp;·&nbsp; Booked → Prelim/DD &nbsp;·&nbsp; Contracted → FP/FC &nbsp;·&nbsp; Construction → FP/FC &nbsp;|&nbsp; แสดงสถานะของ Architect 1 เป็นหลัก
     </div>`;
 }
 
@@ -440,9 +446,9 @@ function renderRespChart(all){
   // Only Arch1, Arch2, BD
   const ARCH_ROLES=[{k:'arch1',l:'A1',c:'#5856d6'},{k:'arch2',l:'A2',c:'#0066cc'},{k:'bd',l:'BD',c:'#34c759'}];
   const ST_CFG=[
+    {s:'Non-Poten',     c:'#c7c7cc', short:'Non-Poten'},
     {s:'Pre-Book',      c:'#8e8e93', short:'Pre-Book'},
     {s:'Booked',        c:'#0066cc', short:'Booked'},
-    {s:'Pre-Contract',  c:'#ff9500', short:'Pre-Cont.'},
     {s:'Contracted',    c:'#34c759', short:'Contract.'},
     {s:'Construction',  c:'#ff3b30', short:'Construct.'},
     {s:'Handover',      c:'#5856d6', short:'Handover'},
