@@ -59,6 +59,7 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
 .phd2{padding:.55rem .85rem;display:flex;justify-content:space-between;align-items:center}
 .ptitle{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#fff}
 .pcount{font-size:13px;font-weight:700;color:#fff;background:rgba(255,255,255,.18);border-radius:var(--r-pill);padding:1px 7px;line-height:1.5}
+.pbudget{font-size:9px;color:rgba(255,255,255,.65);margin-top:2px;white-space:nowrap}
 .phd2.pb{background:var(--c-pb)} .phd2.bk{background:var(--c-bk)} .phd2.pc{background:var(--c-pc)}
 .phd2.ct{background:var(--c-ct)} .phd2.cs{background:var(--c-cs)} .phd2.hv{background:var(--c-hv)}
 .pbody{padding:.55rem .7rem;display:flex;flex-direction:column;gap:.4rem;min-height:72px}
@@ -146,6 +147,7 @@ tbody tr:hover td{background:#fafafa}
 .toast.show{transform:translateY(0);opacity:1}
 
 @media(max-width:900px){.pipeline{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){.sdm-grid{grid-template-columns:1fr!important}}
 @media(max-width:640px){
   .nav-toggle{display:flex;margin-left:auto}
   .topnav-links{display:none;position:fixed;top:44px;left:0;right:0;background:#111;flex-direction:column;align-items:stretch;padding:.6rem 1.5rem .8rem;gap:0;border-bottom:1px solid rgba(255,255,255,.1);z-index:99;box-shadow:0 8px 20px rgba(0,0,0,.35)}
@@ -221,9 +223,15 @@ tbody tr:hover td{background:#fafafa}
     </div>
   </div>
 
+  <!-- Status × Design Matrix -->
   <div class="cc" style="margin-bottom:1.25rem">
-    <div class="cc-title">Responsible — ภาระงาน</div>
-    <div class="bars" id="respChart"></div>
+    <div class="cc-title">Project Status × สถานะงานออกแบบ — ความสัมพันธ์</div>
+    <div id="statusDesignChart"></div>
+  </div>
+
+  <div class="cc" style="margin-bottom:1.25rem">
+    <div class="cc-title">Architect &amp; BD — จำนวนโครงการตามสถานะโครงการ</div>
+    <div id="respChart"></div>
   </div>
 
   <!-- Table -->
@@ -293,7 +301,8 @@ function fmtM(n){ return n==null||n===''?'0':(Number(n)/1e6).toFixed(1); }
 function render(){
   const all = getDB();
   $('lastUpdate').textContent = `ข้อมูล ณ ${new Date().toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})} · ${all.length} รายการ`;
-  renderStats(all); renderPipeline(all); renderTypeChart(all); renderBudget(all); renderRespChart(all); renderTable();
+  renderStats(all); renderPipeline(all); renderTypeChart(all); renderBudget(all);
+  renderStatusDesignMatrix(all); renderRespChart(all); renderTable();
 }
 
 function renderStats(all){
@@ -306,11 +315,18 @@ function renderStats(all){
 function renderPipeline(all){
   $('pipeline').innerHTML = STATUSES.map(s=>{
     const list = all.filter(c=>c.status===s);
+    const totalBudget = list.reduce((sum,c)=>sum+(Number(c.budget)||0),0);
     const items = list.slice(0,6).map(c=>
       `<div class="pitem" onclick="openModal('${c.id}')"><span class="pdot" style="background:${TC[c.productType]||'#ccc'}"></span>${c.name}</div>`
     ).join('');
     return `<div class="pcol">
-      <div class="phd2 ${PC[s]}"><span class="ptitle">${s}</span><span class="pcount">${list.length}</span></div>
+      <div class="phd2 ${PC[s]}">
+        <div>
+          <span class="ptitle">${s}</span>
+          <div class="pbudget">${totalBudget>0?fmtM(totalBudget)+' ล้านบาท':'—'}</div>
+        </div>
+        <span class="pcount">${list.length}</span>
+      </div>
       <div class="pbody">${items||'<div class="pempty">ว่าง</div>'}</div>
     </div>`;
   }).join('');
@@ -340,21 +356,157 @@ function renderBudget(all){
     <div class="brow2"><span class="blbl">จำนวนโครงการที่มีงบ</span><span class="bval2 g">${count} โครงการ</span></div>`;
 }
 
+function renderStatusDesignMatrix(all){
+  const GROUPS=[
+    {
+      status:'Pre-Book',
+      stages:[{name:'Concept Design 1',c:'#5856d6'},{name:'Concept Design 2',c:'#8e7ae8'}],
+      hColor:'#8e8e93'
+    },
+    {
+      status:'Booked',
+      stages:[{name:'Prelim Design',c:'#0066cc'},{name:'Design Develop',c:'#34aadc'}],
+      hColor:'#0066cc'
+    },
+    {
+      status:'Contracted',
+      stages:[{name:'For Permit',c:'#ff9500'},{name:'For Const',c:'#ff3b30'}],
+      hColor:'#34c759'
+    },
+  ];
+
+  // Primary design stage: arch1Status first, else arch2Status
+  const getPrimStage = c => (c.responsible?.arch1Status||c.responsible?.arch2Status||'').trim();
+
+  const cols = GROUPS.map(({status, stages, hColor})=>{
+    const projs = all.filter(c=>c.status===status);
+    const total = projs.length;
+    const maxN  = Math.max(...stages.map(({name})=>projs.filter(c=>getPrimStage(c)===name).length), 1);
+
+    const stageBars = stages.map(({name,c})=>{
+      const n = projs.filter(p=>getPrimStage(p)===name).length;
+      const w = total>0 ? (n/maxN*100).toFixed(0) : 0;
+      return `
+        <div style="margin-bottom:.55rem">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.25rem">
+            <span style="font-size:11px;color:var(--ink-soft)">${name}</span>
+            <span style="font-size:13px;font-weight:700;color:${n>0?c:'var(--border)'}">${n}</span>
+          </div>
+          <div style="height:8px;background:var(--border-soft);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${n>0?w+'%':'0'};background:${c};border-radius:4px;transition:width .5s ease"></div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Architects in this status group (unique names + roles)
+    const archMap={};
+    projs.forEach(c=>{
+      if(c.responsible?.arch1) archMap[c.responsible.arch1]='A1';
+      if(c.responsible?.arch2 && !archMap[c.responsible.arch2]) archMap[c.responsible.arch2]='A2';
+    });
+    const archChips = Object.entries(archMap).map(([name,role])=>{
+      const rc = role==='A1' ? '#5856d6' : '#0066cc';
+      return `<span style="display:inline-flex;align-items:center;gap:.25rem;font-size:10px;padding:2px 7px 2px 5px;border-radius:9999px;background:${rc}18;border:1px solid ${rc}40;color:${rc}">
+        <span style="width:5px;height:5px;border-radius:50%;background:${rc};display:inline-block;flex-shrink:0"></span>
+        ${name}<span style="opacity:.55;font-size:9px;margin-left:.15rem">${role}</span></span>`;
+    }).join('');
+
+    const allStageNames = stages.map(s=>s.name);
+    const noStage = projs.filter(c=>!allStageNames.includes(getPrimStage(c))).length;
+
+    return `<div style="background:var(--canvas);border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden">
+      <div style="background:${hColor};padding:.6rem 1rem;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#fff">${status}</span>
+        <span style="font-size:15px;font-weight:700;color:#fff;background:rgba(255,255,255,.2);border-radius:9999px;padding:1px 10px">${total}</span>
+      </div>
+      <div style="padding:.9rem 1rem">
+        ${total>0 ? stageBars : '<div style="font-size:11px;color:var(--border);text-align:center;padding:.6rem 0">ไม่มีโครงการ</div>'}
+        ${archChips ? `<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.7rem;padding-top:.65rem;border-top:1px solid var(--border-soft)">${archChips}</div>` : ''}
+        ${(noStage>0 && total>0) ? `<div style="margin-top:.55rem;font-size:10px;color:var(--orange)">⚠ ${noStage} โครงการ ยังไม่ระบุสถานะออกแบบ</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  $('statusDesignChart').innerHTML=`
+    <div class="sdm-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem">
+      ${cols}
+    </div>
+    <div style="font-size:10px;color:var(--ink-muted);margin-top:.65rem">
+      Pre-Book → CD1/CD2 &nbsp;·&nbsp; Booked → Prelim/DD &nbsp;·&nbsp; Contracted → FP/FC &nbsp;|&nbsp; แสดงสถานะของ Architect 1 เป็นหลัก
+    </div>`;
+}
+
 function renderRespChart(all){
-  const cnt={};
+  // Only Arch1, Arch2, BD
+  const ARCH_ROLES=[{k:'arch1',l:'A1',c:'#5856d6'},{k:'arch2',l:'A2',c:'#0066cc'},{k:'bd',l:'BD',c:'#34c759'}];
+  const ST_CFG=[
+    {s:'Pre-Book',      c:'#8e8e93', short:'Pre-Book'},
+    {s:'Booked',        c:'#0066cc', short:'Booked'},
+    {s:'Pre-Contract',  c:'#ff9500', short:'Pre-Cont.'},
+    {s:'Contracted',    c:'#34c759', short:'Contract.'},
+    {s:'Construction',  c:'#ff3b30', short:'Construct.'},
+    {s:'Handover',      c:'#5856d6', short:'Handover'},
+  ];
+
+  // Build person → {roles[], perStatus{}, total}
+  const pmap={};
   all.forEach(c=>{
-    ['arch1','arch2','bd','construct','sales'].forEach(k=>{
-      const n=c.responsible?.[k]; if(n){cnt[n]=(cnt[n]||0)+1;}
+    ARCH_ROLES.forEach(({k,l})=>{
+      const name=(c.responsible?.[k]||'').trim(); if(!name) return;
+      if(!pmap[name]){pmap[name]={roles:[],per:{},total:0};ST_CFG.forEach(x=>pmap[name].per[x.s]=0);}
+      if(!pmap[name].roles.includes(l)) pmap[name].roles.push(l);
+      pmap[name].per[c.status]=(pmap[name].per[c.status]||0)+1;
+      pmap[name].total++;
     });
   });
-  const entries=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const mx=entries[0]?.[1]||1;
-  $('respChart').innerHTML=entries.length?entries.map(([n,v])=>`
-    <div class="brow">
-      <span class="bkey">${n}</span>
-      <div class="btrack"><div class="bfill" style="width:${(v/mx*100).toFixed(1)}%;background:var(--primary)"></div></div>
-      <span class="bval">${v}</span>
-    </div>`).join(''):'<div style="font-size:12px;color:var(--ink-muted)">ยังไม่มีข้อมูล</div>';
+
+  const entries=Object.entries(pmap).sort((a,b)=>b[1].total-a[1].total);
+  if(!entries.length){
+    $('respChart').innerHTML='<div style="font-size:12px;color:var(--ink-muted)">ยังไม่มีข้อมูล</div>'; return;
+  }
+
+  // Role badge legend
+  const roleLegend=ARCH_ROLES.map(({l,c})=>
+    `<span style="display:inline-flex;align-items:center;gap:.3rem;font-size:10px;color:var(--ink-muted)">
+       <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${c}"></span>${l === 'BD' ? 'BD' : l==='A1'?'Architect 1':'Architect 2'}</span>`
+  ).join('<span style="color:var(--border);margin:0 .35rem">·</span>');
+
+  // Header cells
+  const headCells=ST_CFG.map(({c,short})=>
+    `<th style="text-align:center;padding:5px 8px;font-size:9px;font-weight:700;letter-spacing:.04em;color:${c};border-bottom:2px solid ${c};white-space:nowrap">${short}</th>`
+  ).join('');
+
+  // Data rows
+  const rows=entries.map(([name,v])=>{
+    const roleBadges=v.roles.map(r=>{
+      const rc=ARCH_ROLES.find(x=>x.l===r)?.c||'#666';
+      return `<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:${rc};color:#fff;margin-left:.3rem;font-weight:600">${r}</span>`;
+    }).join('');
+    const cells=ST_CFG.map(({s,c})=>{
+      const n=v.per[s]||0;
+      return n>0
+        ? `<td style="text-align:center;padding:5px 8px;font-size:13px;font-weight:700;color:${c}">${n}</td>`
+        : `<td style="text-align:center;padding:5px 8px;font-size:11px;color:var(--border-soft)">·</td>`;
+    }).join('');
+    return `<tr style="border-bottom:1px solid var(--border-soft)">
+      <td style="padding:6px 10px;white-space:nowrap">${name}${roleBadges}</td>
+      ${cells}
+      <td style="text-align:center;padding:6px 10px;font-size:14px;font-weight:700;color:var(--primary)">${v.total}</td>
+    </tr>`;
+  }).join('');
+
+  $('respChart').innerHTML=`
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.85rem">${roleLegend}</div>
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+        <th style="text-align:left;padding:5px 10px;font-size:10px;font-weight:600;color:var(--ink-muted);border-bottom:2px solid var(--border);white-space:nowrap">ชื่อผู้รับผิดชอบ</th>
+        ${headCells}
+        <th style="text-align:center;padding:5px 10px;font-size:10px;font-weight:700;color:var(--primary);border-bottom:2px solid var(--primary)">รวม</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div style="font-size:10px;color:var(--ink-muted);margin-top:.6rem">แสดงเฉพาะ Architect 1 · Architect 2 · BD &nbsp;|&nbsp; ตัวเลข = จำนวนโครงการในแต่ละสถานะ</div>`;
 }
 
 function renderTable(){
@@ -457,9 +609,11 @@ function openModal(id){
 
     <div class="msec">Responsible Team</div>
     <div class="mgrid">
-      ${mf('Architect 1',c.responsible?.arch1)} ${mf('Architect 2',c.responsible?.arch2)}
-      ${mf('BD',c.responsible?.bd)} ${mf('Construction',c.responsible?.construct)}
-      ${mf('Sales',c.responsible?.sales)}
+      ${mfr('Architect 1',c.responsible?.arch1,c.responsible?.arch1Status)}
+      ${mfr('Architect 2',c.responsible?.arch2,c.responsible?.arch2Status)}
+      ${mfr('BD',c.responsible?.bd,c.responsible?.bdStatus)}
+      ${mfr('Construction',c.responsible?.construct,c.responsible?.constructStatus)}
+      ${mfr('Sales',c.responsible?.sales,c.responsible?.salesStatus)}
     </div>
 
     ${pitchHtml}${attHtml}
@@ -472,6 +626,12 @@ function openModal(id){
   $('mbg').classList.add('show');
 }
 function mf(l,v){ return `<div class="mf"><div class="ml">${l}</div><div class="mv">${v||'—'}</div></div>`; }
+function mfr(l,name,status){
+  if(!name) return mf(l,'—');
+  const SC_RESP={'รอดำเนินการ':'#8e8e93','กำลังดำเนินการ':'#0066cc','รอพิจารณา':'#ff9500','เสร็จสิ้น':'#34c759'};
+  const badge=status?`<span style="font-size:9px;padding:1px 7px;border-radius:9999px;background:${SC_RESP[status]||'#8e8e93'};color:#fff;font-weight:600;margin-left:.4rem">${status}</span>`:'';
+  return `<div class="mf"><div class="ml">${l}</div><div class="mv" style="display:flex;align-items:center;flex-wrap:wrap;gap:.2rem">${name}${badge}</div></div>`;
+}
 function openFile(d){ const w=window.open();w.document.write(`<iframe src="${d}" style="width:100%;height:100%;border:none"></iframe>`); }
 function closeModal(){ $('mbg').classList.remove('show'); }
 function closeMBg(e){ if(e.target===$('mbg')) closeModal(); }
