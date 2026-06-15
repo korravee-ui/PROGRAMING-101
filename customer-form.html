@@ -522,6 +522,7 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
         <div class="img-grid" id="previewGrid"></div>
       </div>
       <div class="form-actions">
+        <button type="button" class="btn btn-danger" onclick="deleteAllCustomers()" style="margin-right:auto">ลบข้อมูลทั้งหมด</button>
         <button type="button" class="btn btn-outline" onclick="resetForm()">ล้างข้อมูล</button>
         <button type="submit" class="btn btn-primary">บันทึกข้อมูล</button>
       </div>
@@ -674,6 +675,15 @@ function resetForm(){
   $('page-title').textContent='New Customer';
 }
 function cancelEdit(){resetForm();}
+
+function deleteAllCustomers(){
+  const count = getDB().length;
+  if(!count){ toast('ไม่มีข้อมูลลูกค้า'); return; }
+  if(!confirm(`ยืนยันลบข้อมูลลูกค้าทั้งหมด ${count} รายการ?\n\nการกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
+  setDB([]);
+  resetForm();
+  toast(`ลบข้อมูลทั้งหมด ${count} รายการเรียบร้อย`);
+}
 
 // ── Load for edit ──
 window.addEventListener('DOMContentLoaded',()=>{
