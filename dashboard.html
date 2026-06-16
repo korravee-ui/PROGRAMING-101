@@ -216,7 +216,7 @@ tbody tr:hover td{background:#fafafa}
   <div class="two">
     <div class="cc">
       <div class="cc-title">Product Type</div>
-      <div class="bars" id="typeChart"></div>
+      <div id="typeChart"></div>
     </div>
     <div class="cc">
       <div class="cc-title">งบประมาณโครงการ</div>
@@ -334,15 +334,53 @@ function renderPipeline(all){
 }
 
 function renderTypeChart(all){
-  const cnt={};TYPES.forEach(t=>cnt[t]=0);
+  const cnt={};
+  TYPES.forEach(t=>cnt[t]=0);
   all.forEach(c=>{if(c.productType)cnt[c.productType]=(cnt[c.productType]||0)+1;});
-  const mx=Math.max(...Object.values(cnt),1);
-  $('typeChart').innerHTML=TYPES.map(t=>`
-    <div class="brow">
-      <span class="bkey">${t}</span>
-      <div class="btrack"><div class="bfill" style="width:${(cnt[t]/mx*100).toFixed(1)}%;background:${TC[t]}"></div></div>
-      <span class="bval">${cnt[t]}</span>
+  const total=TYPES.reduce((s,t)=>s+cnt[t],0);
+
+  const cx=80,cy=80,ro=62,ri=36;
+  const toRad=d=>d*Math.PI/180;
+  const pt=(r,d)=>[cx+r*Math.cos(toRad(d)),cy+r*Math.sin(toRad(d))];
+
+  let slices='';
+  if(total===0){
+    slices=`<circle cx="${cx}" cy="${cy}" r="${(ro+ri)/2}" fill="none" stroke="#e8e8ed" stroke-width="${ro-ri}"/>`;
+  } else {
+    const active=TYPES.filter(t=>cnt[t]>0);
+    if(active.length===1){
+      slices=`<circle cx="${cx}" cy="${cy}" r="${(ro+ri)/2}" fill="none" stroke="${TC[active[0]]}" stroke-width="${ro-ri}"/>`;
+    } else {
+      let sd=-90;
+      TYPES.forEach(t=>{
+        if(!cnt[t])return;
+        const ed=sd+cnt[t]/total*360;
+        const [x1i,y1i]=pt(ri,sd),[x1o,y1o]=pt(ro,sd);
+        const [x2o,y2o]=pt(ro,ed),[x2i,y2i]=pt(ri,ed);
+        const lg=ed-sd>180?1:0;
+        slices+=`<path d="M${x1i.toFixed(2)} ${y1i.toFixed(2)} L${x1o.toFixed(2)} ${y1o.toFixed(2)} A${ro} ${ro} 0 ${lg} 1 ${x2o.toFixed(2)} ${y2o.toFixed(2)} L${x2i.toFixed(2)} ${y2i.toFixed(2)} A${ri} ${ri} 0 ${lg} 0 ${x1i.toFixed(2)} ${y1i.toFixed(2)}Z" fill="${TC[t]}" stroke="#fff" stroke-width="1.5"/>`;
+        sd=ed;
+      });
+    }
+  }
+
+  const legend=TYPES.map(t=>`
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem">
+      <div style="width:9px;height:9px;border-radius:2px;background:${TC[t]};flex-shrink:0"></div>
+      <span style="font-size:11px;color:#1d1d1f;flex:1">${t}</span>
+      <span style="font-size:12px;font-weight:600;color:#333">${cnt[t]}</span>
+      ${total>0?`<span style="font-size:10px;color:#6e6e73;min-width:30px;text-align:right">${Math.round(cnt[t]/total*100)}%</span>`:''}
     </div>`).join('');
+
+  $('typeChart').innerHTML=`
+    <div style="display:flex;align-items:center;gap:1.25rem">
+      <svg width="160" height="160" viewBox="0 0 160 160" style="flex-shrink:0">
+        ${slices}
+        <text x="${cx}" y="${cy-5}" text-anchor="middle" style="font-size:22px;font-weight:700;fill:#1d1d1f;font-family:system-ui">${total}</text>
+        <text x="${cx}" y="${cy+11}" text-anchor="middle" style="font-size:9px;fill:#6e6e73;font-family:system-ui">โครงการ</text>
+      </svg>
+      <div style="flex:1">${legend}</div>
+    </div>`;
 }
 
 function renderBudget(all){
