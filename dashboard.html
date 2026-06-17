@@ -419,6 +419,11 @@ function renderStatusDesignMatrix(all){
     },
   ];
 
+  const SUBSETS = [
+    {label:'Low-Rise', types:['Apartment','Condo','Hotel','Others'], color:'#ff9500'},
+    {label:'House',    types:['House'],                              color:'#0066cc'},
+  ];
+
   // Primary design stage: arch1Status first, else arch2Status
   const getPrimStage = c => (c.responsible?.arch1Status||c.responsible?.arch2Status||'').trim();
 
@@ -426,6 +431,21 @@ function renderStatusDesignMatrix(all){
     const projs = all.filter(c=>c.status===status);
     const total = projs.length;
     const maxN  = Math.max(...stages.map(({name})=>projs.filter(c=>getPrimStage(c)===name).length), 1);
+
+    const subsetRow = SUBSETS.map(({label, types, color})=>{
+      const n = projs.filter(c=>types.includes(c.productType)).length;
+      const pct = total>0 ? Math.round(n/total*100) : 0;
+      return `<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem">
+        <span style="display:inline-flex;align-items:center;gap:.3rem;font-size:10px;font-weight:600;padding:2px 8px;border-radius:9999px;background:${color}18;border:1px solid ${color}35;color:${color};min-width:72px">
+          <span style="width:5px;height:5px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block"></span>
+          ${label}
+        </span>
+        <div style="flex:1;height:5px;background:var(--border-soft);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${n>0?pct+'%':'0'};background:${color};border-radius:3px;transition:width .5s ease"></div>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:${n>0?color:'var(--border)'};min-width:18px;text-align:right">${n}</span>
+      </div>`;
+    }).join('');
 
     const stageBars = stages.map(({name,c})=>{
       const n = projs.filter(p=>getPrimStage(p)===name).length;
@@ -464,6 +484,9 @@ function renderStatusDesignMatrix(all){
         <span style="font-size:15px;font-weight:700;color:#fff;background:rgba(255,255,255,.2);border-radius:9999px;padding:1px 10px">${total}</span>
       </div>
       <div style="padding:.9rem 1rem">
+        <div style="margin-bottom:.75rem;padding-bottom:.65rem;border-bottom:1px solid var(--border-soft)">
+          ${total>0 ? subsetRow : '<div style="font-size:10px;color:var(--border);text-align:center">—</div>'}
+        </div>
         ${total>0 ? stageBars : '<div style="font-size:11px;color:var(--border);text-align:center;padding:.6rem 0">ไม่มีโครงการ</div>'}
         ${archChips ? `<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.7rem;padding-top:.65rem;border-top:1px solid var(--border-soft)">${archChips}</div>` : ''}
         ${(noStage>0 && total>0) ? `<div style="margin-top:.55rem;font-size:10px;color:var(--orange)">⚠ ${noStage} โครงการ ยังไม่ระบุสถานะออกแบบ</div>` : ''}
@@ -476,7 +499,7 @@ function renderStatusDesignMatrix(all){
       ${cols}
     </div>
     <div style="font-size:10px;color:var(--ink-muted);margin-top:.65rem">
-      Pre-Book → CD1/CD2 &nbsp;·&nbsp; Booked → Prelim/DD &nbsp;·&nbsp; Contracted → FP/FC &nbsp;·&nbsp; Construction → FP/FC &nbsp;|&nbsp; แสดงสถานะของ Architect 1 เป็นหลัก
+      Low-Rise = Apartment · Condo · Hotel · Others &nbsp;|&nbsp; Pre-Book → CD1/CD2 &nbsp;·&nbsp; Booked → Prelim/DD &nbsp;·&nbsp; Contracted → FP/FC &nbsp;·&nbsp; Construction → FP/FC &nbsp;|&nbsp; แสดงสถานะของ Architect 1 เป็นหลัก
     </div>`;
 }
 
