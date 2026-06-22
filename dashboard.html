@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard — Construction CRM</title>
+<title>Dashboard — IHC-BD&amp;PD Dashboard</title>
 <style>
 :root {
   --primary:#0066cc; --primary-lt:#e8f0fb; --primary-dk:#0054aa;
@@ -147,6 +147,25 @@ tbody tr:hover td{background:#fafafa}
 .toast{position:fixed;bottom:2rem;right:2rem;background:var(--ink);color:#fff;padding:.65rem 1.1rem;border-radius:var(--r-sm);font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2);transform:translateY(100px);opacity:0;transition:all .3s;z-index:999}
 .toast.show{transform:translateY(0);opacity:1}
 
+/* TIMELINE */
+.tl-wrap{position:relative;padding:2rem .5rem .5rem}
+.tl-track{position:absolute;top:35px;left:5%;right:5%;height:3px;background:var(--border-soft);border-radius:2px;z-index:0}
+.tl-fill{height:100%;background:var(--primary);border-radius:2px;transition:width .4s ease}
+.tl-nodes{position:relative;display:flex;justify-content:space-between;z-index:1}
+.tl-node{display:flex;flex-direction:column;align-items:center;flex:1;gap:.4rem;min-width:0}
+.tl-dot{width:14px;height:14px;border-radius:50%;background:var(--canvas);border:3px solid var(--border-soft);box-sizing:border-box}
+.tl-dot.done{background:var(--primary);border-color:var(--primary)}
+.tl-dot.active{background:#fff;border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-lt)}
+.tl-label{font-size:10px;font-weight:600;color:var(--ink-muted);text-align:center;white-space:nowrap}
+.tl-label.done{color:var(--ink-soft)}
+.tl-label.active{color:var(--primary)}
+.tl-milestone{display:inline-flex;align-items:center;gap:.3rem;font-size:9px;font-weight:600;padding:2px 8px;border-radius:9999px;border:1px solid;white-space:nowrap}
+.tl-mdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+@media(max-width:640px){
+  .tl-label{font-size:8px;white-space:normal;line-height:1.2}
+  .tl-milestone{font-size:8px;padding:1px 6px}
+}
+
 @media(max-width:900px){.pipeline{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:640px){.sdm-grid{grid-template-columns:1fr!important}}
 @media(max-width:640px){
@@ -178,12 +197,12 @@ tbody tr:hover td{background:#fafafa}
 <body>
 
 <nav class="topnav">
-  <a href="dashboard.html" class="topnav-logo">Construction CRM</a>
+  <a href="dashboard.html" class="topnav-logo">IHC-BD&amp;PD Dashboard</a>
   <button class="nav-toggle" onclick="document.getElementById('topnavLinks').classList.toggle('open')" aria-label="เมนู">☰</button>
   <div class="topnav-links" id="topnavLinks">
     <a href="dashboard.html" class="ni cur">Dashboard</a>
-    <a href="customer-form.html" class="ni">New Customer</a>
-    <a href="customer-card.html" class="ni">Cards</a>
+    <a href="dashboard-status.html" class="ni">Project Status</a>
+    <a href="customer-card.html" class="ni">Customers</a>
     <a href="customer-form.html" class="nb">+ เพิ่มลูกค้า</a>
   </div>
 </nav>
@@ -196,7 +215,6 @@ tbody tr:hover td{background:#fafafa}
       <p id="lastUpdate">—</p>
     </div>
     <div class="phd-act">
-      <button class="btn btn-outline" onclick="seedDemo()">โหลดข้อมูลตัวอย่าง</button>
       <a href="customer-form.html" class="btn btn-primary">+ เพิ่มลูกค้าใหม่</a>
     </div>
   </div>
@@ -226,12 +244,12 @@ tbody tr:hover td{background:#fafafa}
 
   <!-- Status × Design Matrix -->
   <div class="cc" style="margin-bottom:1.25rem">
-    <div class="cc-title">Project Status × สถานะงานออกแบบ — ความสัมพันธ์</div>
+    <div class="cc-title">BD&amp;PD Status</div>
     <div id="statusDesignChart"></div>
   </div>
 
   <div class="cc" style="margin-bottom:1.25rem">
-    <div class="cc-title">Architect &amp; BD — จำนวนโครงการตามสถานะโครงการ</div>
+    <div class="cc-title">BD&amp;PD Workload</div>
     <div id="respChart"></div>
   </div>
 
@@ -289,6 +307,7 @@ tbody tr:hover td{background:#fafafa}
 <script>
 const DB_KEY = 'crm_customers';
 const STATUSES = ['Non-Poten','Pre-Book','Booked','Contracted','Construction','Handover'];
+const DISPLAY_ORDER = ['Handover','Construction','Contracted','Booked','Pre-Book','Non-Poten'];
 const TYPES    = ['House','Apartment','Condo','Hotel','Others'];
 const SC = {'Non-Poten':'np2','Pre-Book':'pb','Booked':'bk','Contracted':'ct2','Construction':'cs2','Handover':'hv2'};
 const PC = {'Non-Poten':'np','Pre-Book':'pb','Booked':'bk','Contracted':'ct','Construction':'cs','Handover':'hv'};
@@ -424,8 +443,16 @@ function renderStatusDesignMatrix(all){
     {label:'House',    types:['House'],                              color:'#0066cc'},
   ];
 
-  // Primary design stage: arch1Status first, else arch2Status
-  const getPrimStage = c => (c.responsible?.arch1Status||c.responsible?.arch2Status||'').trim();
+  // Primary design stage: arch1Status
+  const getPrimStage = c => (c.responsible?.arch1Status||'').trim();
+
+  const BD_STATUSES=[
+    {name:'Market & Finance', label:'Market & Finance (Submitted)', c:'#5856d6'},
+    {name:'Support',          label:'Support',                      c:'#ff9500'},
+    {name:'On Process',       label:'On Process',                   c:'#0066cc'},
+    {name:'N/A',              label:'N/A',                           c:'#c7c7cc'},
+  ];
+  const getBdStatus = c => (c.responsible?.bdStatus||'').trim();
 
   const cols = GROUPS.map(({status, stages, hColor})=>{
     const projs = all.filter(c=>c.status===status);
@@ -462,14 +489,41 @@ function renderStatusDesignMatrix(all){
         </div>`;
     }).join('');
 
-    // Architects in this status group (unique names + roles)
+    const bdMaxN = Math.max(...BD_STATUSES.map(({name})=>projs.filter(c=>getBdStatus(c)===name).length), 1);
+    const bdBars = BD_STATUSES.map(({name,label,c})=>{
+      const n = projs.filter(p=>getBdStatus(p)===name).length;
+      const w = total>0 ? (n/bdMaxN*100).toFixed(0) : 0;
+      return `
+        <div style="margin-bottom:.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.2rem">
+            <span style="font-size:10px;color:var(--ink-soft)">${label}</span>
+            <span style="font-size:12px;font-weight:700;color:${n>0?c:'var(--border)'}">${n}</span>
+          </div>
+          <div style="height:6px;background:var(--border-soft);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${n>0?w+'%':'0'};background:${c};border-radius:3px;transition:width .5s ease"></div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Architects in this status group (unique names)
     const archMap={};
     projs.forEach(c=>{
       if(c.responsible?.arch1) archMap[c.responsible.arch1]='A1';
-      if(c.responsible?.arch2 && !archMap[c.responsible.arch2]) archMap[c.responsible.arch2]='A2';
     });
     const archChips = Object.entries(archMap).map(([name,role])=>{
-      const rc = role==='A1' ? '#5856d6' : '#0066cc';
+      const rc = '#5856d6';
+      return `<span style="display:inline-flex;align-items:center;gap:.25rem;font-size:10px;padding:2px 7px 2px 5px;border-radius:9999px;background:${rc}18;border:1px solid ${rc}40;color:${rc}">
+        <span style="width:5px;height:5px;border-radius:50%;background:${rc};display:inline-block;flex-shrink:0"></span>
+        ${name}<span style="opacity:.55;font-size:9px;margin-left:.15rem">${role}</span></span>`;
+    }).join('');
+
+    // BD in this status group (unique names)
+    const bdMap={};
+    projs.forEach(c=>{
+      if(c.responsible?.bd) bdMap[c.responsible.bd]='BD';
+    });
+    const bdChips = Object.entries(bdMap).map(([name,role])=>{
+      const rc = '#34c759';
       return `<span style="display:inline-flex;align-items:center;gap:.25rem;font-size:10px;padding:2px 7px 2px 5px;border-radius:9999px;background:${rc}18;border:1px solid ${rc}40;color:${rc}">
         <span style="width:5px;height:5px;border-radius:50%;background:${rc};display:inline-block;flex-shrink:0"></span>
         ${name}<span style="opacity:.55;font-size:9px;margin-left:.15rem">${role}</span></span>`;
@@ -487,9 +541,13 @@ function renderStatusDesignMatrix(all){
         <div style="margin-bottom:.75rem;padding-bottom:.65rem;border-bottom:1px solid var(--border-soft)">
           ${total>0 ? subsetRow : '<div style="font-size:10px;color:var(--border);text-align:center">—</div>'}
         </div>
+        <div style="font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:.45rem">สถานะงานออกแบบ (PD)</div>
         ${total>0 ? stageBars : '<div style="font-size:11px;color:var(--border);text-align:center;padding:.6rem 0">ไม่มีโครงการ</div>'}
-        ${archChips ? `<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.7rem;padding-top:.65rem;border-top:1px solid var(--border-soft)">${archChips}</div>` : ''}
-        ${(noStage>0 && total>0) ? `<div style="margin-top:.55rem;font-size:10px;color:var(--orange)">⚠ ${noStage} โครงการ ยังไม่ระบุสถานะออกแบบ</div>` : ''}
+        ${archChips ? `<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.2rem;margin-bottom:.7rem">${archChips}</div>` : ''}
+        ${(noStage>0 && total>0) ? `<div style="margin-bottom:.65rem;font-size:10px;color:var(--orange)">⚠ ${noStage} โครงการ ยังไม่ระบุสถานะออกแบบ</div>` : ''}
+        <div style="font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-muted);margin:.65rem 0 .45rem;padding-top:.65rem;border-top:1px solid var(--border-soft)">สถานะงาน BD</div>
+        ${total>0 ? bdBars : '<div style="font-size:11px;color:var(--border);text-align:center;padding:.6rem 0">ไม่มีโครงการ</div>'}
+        ${bdChips ? `<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.2rem">${bdChips}</div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -499,13 +557,13 @@ function renderStatusDesignMatrix(all){
       ${cols}
     </div>
     <div style="font-size:10px;color:var(--ink-muted);margin-top:.65rem">
-      Low-Rise = Apartment · Condo · Hotel · Others &nbsp;|&nbsp; Pre-Book → CD1/CD2 &nbsp;·&nbsp; Booked → Prelim/DD &nbsp;·&nbsp; Contracted → FP/FC &nbsp;·&nbsp; Construction → FP/FC &nbsp;|&nbsp; แสดงสถานะของ Architect 1 เป็นหลัก
+      Low-Rise = Apartment · Condo · Hotel · Others &nbsp;|&nbsp; Pre-Book → CD1/CD2 &nbsp;·&nbsp; Booked → Prelim/DD &nbsp;·&nbsp; Contracted → FP/FC &nbsp;·&nbsp; Construction → FP/FC
     </div>`;
 }
 
 function renderRespChart(all){
-  // Only Arch1, Arch2, BD
-  const ARCH_ROLES=[{k:'arch1',l:'A1',c:'#5856d6'},{k:'arch2',l:'A2',c:'#0066cc'},{k:'bd',l:'BD',c:'#34c759'}];
+  // Only Arch1, BD
+  const ARCH_ROLES=[{k:'arch1',l:'A1',c:'#5856d6'},{k:'bd',l:'BD',c:'#34c759'}];
   const ST_CFG=[
     {s:'Non-Poten',     c:'#c7c7cc', short:'Non-Poten'},
     {s:'Pre-Book',      c:'#8e8e93', short:'Pre-Book'},
@@ -520,6 +578,7 @@ function renderRespChart(all){
   all.forEach(c=>{
     ARCH_ROLES.forEach(({k,l})=>{
       const name=(c.responsible?.[k]||'').trim(); if(!name) return;
+      if(k==='bd' && c.responsible?.bdStatus==='N/A') return;
       if(!pmap[name]){pmap[name]={roles:[],per:{},total:0};ST_CFG.forEach(x=>pmap[name].per[x.s]=0);}
       if(!pmap[name].roles.includes(l)) pmap[name].roles.push(l);
       pmap[name].per[c.status]=(pmap[name].per[c.status]||0)+1;
@@ -535,7 +594,7 @@ function renderRespChart(all){
   // Role badge legend
   const roleLegend=ARCH_ROLES.map(({l,c})=>
     `<span style="display:inline-flex;align-items:center;gap:.3rem;font-size:10px;color:var(--ink-muted)">
-       <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${c}"></span>${l === 'BD' ? 'BD' : l==='A1'?'Architect 1':'Architect 2'}</span>`
+       <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${c}"></span>${l === 'BD' ? 'BD' : 'Architect 1'}</span>`
   ).join('<span style="color:var(--border);margin:0 .35rem">·</span>');
 
   // Header cells
@@ -573,7 +632,7 @@ function renderRespChart(all){
       </tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
-    <div style="font-size:10px;color:var(--ink-muted);margin-top:.6rem">แสดงเฉพาะ Architect 1 · Architect 2 · BD &nbsp;|&nbsp; ตัวเลข = จำนวนโครงการในแต่ละสถานะ</div>`;
+    <div style="font-size:10px;color:var(--ink-muted);margin-top:.6rem">แสดงเฉพาะ Architect 1 · BD &nbsp;|&nbsp; ตัวเลข = จำนวนโครงการในแต่ละสถานะ</div>`;
 }
 
 function renderTable(){
@@ -583,7 +642,7 @@ function renderTable(){
   const data = getDB().filter(c=>{
     const m = c.name?.toLowerCase().includes(q)||c.phone?.includes(q)||c.projectName?.toLowerCase().includes(q)||c.id?.includes(q);
     return m&&(!fs||c.status===fs)&&(!ft||c.productType===ft);
-  });
+  }).sort((a,b)=>DISPLAY_ORDER.indexOf(a.status)-DISPLAY_ORDER.indexOf(b.status));
   const tb=$('tableBody'), em=$('emptyState');
   if(!data.length){tb.innerHTML='';em.style.display='block';return;}
   em.style.display='none';
@@ -604,6 +663,47 @@ function renderTable(){
       <button class="abtn ad" onclick="deleteCustomer('${c.id}')">ลบ</button>
     </td>
   </tr>`).join('');
+}
+
+const DESIGN_STAGES = {
+  'Pre-Book':    ['Concept Design 1','Concept Design 2'],
+  'Booked':      ['Prelim Design','Design Develop'],
+  'Contracted':  ['For Permit','For Const'],
+  'Construction':['For Permit','For Const'],
+};
+const STAGE_COLOR = {
+  'Concept Design 1':'#5856d6','Concept Design 2':'#8e7ae8',
+  'Prelim Design':'#0066cc','Design Develop':'#34aadc',
+  'For Permit':'#ff9500','For Const':'#ff3b30',
+};
+
+function buildTimeline(c){
+  const si = STATUSES.indexOf(c.status);
+  const primStage = (c.responsible?.arch1Status || '').trim();
+
+  const nodes = STATUSES.map((s,i)=>{
+    const state = i<si?'done':i===si?'active':'';
+    const stages = DESIGN_STAGES[s];
+    const showMilestone = i===si && stages && stages.includes(primStage);
+    const col = STAGE_COLOR[primStage]||'#8e8e93';
+    const milestoneHtml = showMilestone
+      ? `<div class="tl-milestone" style="background:${col}18;border-color:${col}55;color:${col}">
+           <span class="tl-mdot" style="background:${col}"></span>${primStage}
+         </div>`
+      : '';
+    return `<div class="tl-node">
+      <div class="tl-dot ${state}"></div>
+      <div class="tl-label ${state}">${s}</div>
+      ${milestoneHtml}
+    </div>`;
+  }).join('');
+
+  const fillPct = si<=0 ? 0 : (si/(STATUSES.length-1)*100);
+
+  return `<div class="tl-wrap">
+    <div class="tl-track"><div class="tl-fill" style="width:${fillPct}%"></div></div>
+    <div class="tl-nodes">${nodes}</div>
+  </div>`;
 }
 
 function openModal(id){
@@ -649,7 +749,9 @@ function openModal(id){
     ).join('')}</div>`:'';
 
   $('mbody').innerHTML=`
-    <span class="badge ${sc}" style="display:inline-flex;margin-bottom:1rem">${c.status}</span>
+    <span class="badge ${sc}" style="display:inline-flex;margin-bottom:.5rem">${c.status}</span>
+    <div class="msec" style="margin-top:.5rem">Timeline สถานะ &amp; Milestone งานออกแบบ</div>
+    ${buildTimeline(c)}
 
     <div class="msec">ข้อมูลลูกค้า</div>
     <div class="mgrid">
@@ -677,7 +779,6 @@ function openModal(id){
     <div class="msec">Responsible Team</div>
     <div class="mgrid">
       ${mfr('Architect 1',c.responsible?.arch1,c.responsible?.arch1Status)}
-      ${mfr('Architect 2',c.responsible?.arch2,c.responsible?.arch2Status)}
       ${mfr('BD',c.responsible?.bd,c.responsible?.bdStatus)}
       ${mfr('Construction',c.responsible?.construct,c.responsible?.constructStatus)}
       ${mfr('Sales',c.responsible?.sales,c.responsible?.salesStatus)}
@@ -695,8 +796,9 @@ function openModal(id){
 function mf(l,v){ return `<div class="mf"><div class="ml">${l}</div><div class="mv">${v||'—'}</div></div>`; }
 function mfr(l,name,status){
   if(!name) return mf(l,'—');
-  const SC_RESP={'รอดำเนินการ':'#8e8e93','กำลังดำเนินการ':'#0066cc','รอพิจารณา':'#ff9500','เสร็จสิ้น':'#34c759'};
-  const badge=status?`<span style="font-size:9px;padding:1px 7px;border-radius:9999px;background:${SC_RESP[status]||'#8e8e93'};color:#fff;font-weight:600;margin-left:.4rem">${status}</span>`:'';
+  const SC_RESP={'รอดำเนินการ':'#8e8e93','กำลังดำเนินการ':'#0066cc','รอพิจารณา':'#ff9500','เสร็จสิ้น':'#34c759',
+    'N/A':'#c7c7cc','On Process':'#0066cc','Support':'#ff9500','Market & Finance':'#5856d6'};
+  const badge=(status&&status!=='N/A')?`<span style="font-size:9px;padding:1px 7px;border-radius:9999px;background:${SC_RESP[status]||'#8e8e93'};color:#fff;font-weight:600;margin-left:.4rem">${status}</span>`:'';
   return `<div class="mf"><div class="ml">${l}</div><div class="mv" style="display:flex;align-items:center;flex-wrap:wrap;gap:.2rem">${name}${badge}</div></div>`;
 }
 function openFile(d){ const w=window.open();w.document.write(`<iframe src="${d}" style="width:100%;height:100%;border:none"></iframe>`); }
@@ -712,19 +814,6 @@ function deleteCustomer(id){
 function toast(msg){
   const t=$('toast'); t.textContent=msg;
   t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500);
-}
-
-function seedDemo(){
-  if(getDB().length&&!confirm('มีข้อมูลอยู่แล้ว ต้องการเพิ่มข้อมูลตัวอย่างหรือไม่?')) return;
-  const demo=[
-    {id:'CRM-2026-D001',name:'คุณอัมรินทร์ วงศ์สมบูรณ์',company:'วงศ์สมบูรณ์ พร็อพเพอร์ตี้',phone:'081-234-5678',email:'amarin@ws.co.th',lineId:'@amarin',address:'123 ถ.สุขุมวิท 49 กรุงเทพฯ',source:'Referral',customerNote:'ลูกค้า VIP นัดหมายแล้ว',projectName:'บ้านเดี่ยว 2 ชั้น ลาดพร้าว',projectLocation:'ลาดพร้าว ซอย 87',googleMapLink:'',landArea:'100',area:'320',budget:'8500000',budgetPerSqm:'26563',startDate:'2026-06-01',followUpDate:'2026-06-25',productType:'House',status:'Pre-Book',hFloors:'2',hBedrooms:'4',hBathrooms:'4',hParking:'2',hExtra:'Smart Home, ห้องทำงาน',requirements:'ต้องการวัสดุพรีเมียม ไม้จริงทุกพื้น',pitchPrice:'9200000',pitchPricePerSqm:'28750',responsible:{arch1:'สมชาย ดีไซน์',arch2:'',bd:'วิภา ธุรกิจ',construct:'',sales:'ธนา เซลส์'},attachments:[],pitchFiles:[],createdAt:'2026-06-11',updatedAt:'2026-06-11'},
-    {id:'CRM-2026-D002',name:'คุณปริยา เจริญสุข',company:'',phone:'089-876-5432',email:'pariya@gmail.com',lineId:'pariya_c',address:'456 ถ.พหลโยธิน กรุงเทพฯ',source:'Walk-in',customerNote:'',projectName:'คอนโด สุขุมวิท 24',projectLocation:'สุขุมวิท ซอย 24',googleMapLink:'',landArea:'',area:'65',budget:'3200000',budgetPerSqm:'49231',startDate:'2026-05-03',followUpDate:'2026-06-25',productType:'Condo',status:'Contracted',bFloors:'14',bUnits:'1',bLifts:'',bAir:'Full (ทุกห้อง)',bFurniture:'Fully Furnished',bWaterHeater:'ทุกห้อง (Electric)',bExtra:'Built-in ครบชุด',requirements:'พื้นไม้จริง, Built-in kitchen',pitchPrice:'3500000',pitchPricePerSqm:'53846',responsible:{arch1:'สมชาย ดีไซน์',arch2:'ณัฐพงษ์ แบบบ้าน',bd:'วิภา ธุรกิจ',construct:'',sales:'ธนา เซลส์'},attachments:[],pitchFiles:[],createdAt:'2026-05-20',updatedAt:'2026-06-10'},
-    {id:'CRM-2026-D003',name:'บริษัท เฮเว่น โฮเทล จำกัด',company:'เฮเว่น โฮเทล',phone:'02-345-6789',email:'info@heaven.co.th',lineId:'@heavenhotel',address:'789 ถ.เพชรบุรี กรุงเทพฯ',source:'Exhibition',customerNote:'ติดต่อผ่าน Expo 2026',projectName:'โรงแรม Boutique',projectLocation:'อารีย์ กรุงเทพฯ',googleMapLink:'',landArea:'400',area:'2400',budget:'45000000',budgetPerSqm:'18750',startDate:'2026-03-01',followUpDate:'2026-07-01',productType:'Hotel',status:'Construction',bFloors:'5',bUnits:'30',bLifts:'2',bAir:'Full (ทุกห้อง)',bFurniture:'Fully Furnished',bWaterHeater:'Solar Water Heater',bExtra:'Pool, Gym, Rooftop Bar',requirements:'มาตรฐาน 4 ดาว',pitchPrice:'48000000',pitchPricePerSqm:'20000',responsible:{arch1:'สมชาย ดีไซน์',arch2:'ณัฐพงษ์ แบบบ้าน',bd:'วิภา ธุรกิจ',construct:'ทีมก่อสร้าง A',sales:''},attachments:[],pitchFiles:[],createdAt:'2026-02-15',updatedAt:'2026-06-01'},
-    {id:'CRM-2026-D004',name:'คุณธนกฤต ศรีสุวรรณ',company:'',phone:'085-111-2222',email:'thanakrit@mail.com',lineId:'',address:'321 ถ.รามคำแหง กรุงเทพฯ',source:'Referral',customerNote:'',projectName:'อพาร์ทเม้นท์ 8 ชั้น',projectLocation:'รามคำแหง 53',googleMapLink:'',landArea:'200',area:'1800',budget:'28000000',budgetPerSqm:'15556',startDate:'',followUpDate:'2026-06-20',productType:'Apartment',status:'Booked',bFloors:'8',bUnits:'40',bLifts:'1',bAir:'Partial (บางห้อง)',bFurniture:'Partially Furnished',bWaterHeater:'ทุกห้อง (Electric)',bExtra:'ที่จอดรถใต้ดิน',requirements:'รอเอกสารที่ดิน',pitchPrice:'30000000',pitchPricePerSqm:'16667',responsible:{arch1:'',arch2:'ณัฐพงษ์ แบบบ้าน',bd:'วิภา ธุรกิจ',construct:'',sales:'ธนา เซลส์'},attachments:[],pitchFiles:[],createdAt:'2026-06-05',updatedAt:'2026-06-10'},
-    {id:'CRM-2026-D005',name:'คุณมาลี รักไทย',company:'',phone:'091-555-4444',email:'malee@email.com',lineId:'',address:'555 ถ.รัชดาภิเษก กรุงเทพฯ',source:'Social Media',customerNote:'',projectName:'บ้านเดี่ยว มีนบุรี',projectLocation:'มีนบุรี กรุงเทพฯ',googleMapLink:'',landArea:'60',area:'180',budget:'4200000',budgetPerSqm:'23333',startDate:'2025-10-01',followUpDate:'2026-06-30',productType:'House',status:'Handover',hFloors:'2',hBedrooms:'3',hBathrooms:'3',hParking:'1',hExtra:'สวนหลังบ้าน',requirements:'',pitchPrice:'4500000',pitchPricePerSqm:'25000',responsible:{arch1:'สมชาย ดีไซน์',arch2:'',bd:'วิภา ธุรกิจ',construct:'ทีมก่อสร้าง B',sales:'ธนา เซลส์'},attachments:[],pitchFiles:[],createdAt:'2025-09-01',updatedAt:'2026-06-08'},
-  ];
-  localStorage.setItem(DB_KEY,JSON.stringify([...getDB(),...demo]));
-  toast('โหลดข้อมูลตัวอย่างเรียบร้อย'); render();
 }
 
 window.addEventListener('DOMContentLoaded',render);

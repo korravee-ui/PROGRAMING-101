@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Customer Form — Construction CRM</title>
+<title>Customer Form — IHC-BD&amp;PD Dashboard</title>
 <style>
 :root {
   --primary:#0066cc; --primary-dk:#0054aa; --primary-lt:#e8f0fb;
@@ -108,7 +108,7 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
 .dyn.show{display:contents}
 
 /* ── RESPONSIBLE ── */
-.resp5{display:grid;grid-template-columns:repeat(5,1fr);gap:.65rem}
+.resp5{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem}
 .rc{border:1px solid var(--border);border-radius:10px;padding:.85rem .65rem;display:flex;flex-direction:column;align-items:center;gap:.45rem;background:var(--bg)}
 .rc-av{width:32px;height:32px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink-muted)}
 .rc-role{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted)}
@@ -210,12 +210,12 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
 <body>
 
 <nav class="topnav">
-  <a href="dashboard.html" class="topnav-logo">Construction CRM</a>
+  <a href="dashboard.html" class="topnav-logo">IHC-BD&amp;PD Dashboard</a>
   <button class="nav-toggle" onclick="document.getElementById('topnavLinks').classList.toggle('open')" aria-label="เมนู">☰</button>
   <div class="topnav-links" id="topnavLinks">
     <a href="dashboard.html" class="ni">Dashboard</a>
-    <a href="customer-form.html" class="ni cur">New Customer</a>
-    <a href="customer-card.html" class="ni">Cards</a>
+    <a href="dashboard-status.html" class="ni">Project Status</a>
+    <a href="customer-card.html" class="ni">Customers</a>
     <a href="customer-form.html" class="nb">+ เพิ่มลูกค้า</a>
   </div>
 </nav>
@@ -442,7 +442,7 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
 
     <!-- ④  RESPONSIBLE TEAM -->
     <div class="card">
-      <div class="card-hd"><h2>Responsible Team</h2><p>A1/A2 มีสถานะงานออกแบบ</p></div>
+      <div class="card-hd"><h2>Responsible Team</h2><p>A1 มีสถานะงานออกแบบ · BD มีสถานะงาน</p></div>
       <div class="card-body">
         <div class="resp5">
           <div class="rc">
@@ -459,21 +459,15 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
             </select>
           </div>
           <div class="rc">
-            <div class="rc-av">A2</div><div class="rc-role">Architect 2</div>
-            <input id="arch2" type="text" placeholder="ชื่อ">
-            <select id="arch2Status" onchange="this.classList.toggle('has-val',!!this.value)">
-              <option value="">— สถานะงานออกแบบ —</option>
-              <option>Concept Design 1</option>
-              <option>Concept Design 2</option>
-              <option>Prelim Design</option>
-              <option>Design Develop</option>
-              <option>For Permit</option>
-              <option>For Const</option>
-            </select>
-          </div>
-          <div class="rc">
             <div class="rc-av">BD</div><div class="rc-role">BD</div>
             <input id="bd" type="text" placeholder="ชื่อ">
+            <select id="bdStatus" onchange="this.classList.toggle('has-val',!!this.value)">
+              <option value="">— สถานะงาน —</option>
+              <option>N/A</option>
+              <option>On Process</option>
+              <option>Support</option>
+              <option>Market &amp; Finance</option>
+            </select>
           </div>
           <div class="rc">
             <div class="rc-av">CT</div><div class="rc-role">Construction</div>
@@ -646,7 +640,6 @@ function saveCustomer(e){
     pitchPrice:val('pitchPrice'),pitchPricePerSqm:val('pitchPricePerSqm'),
     responsible:{
       arch1:val('arch1'),         arch1Status:val('arch1Status'),
-      arch2:val('arch2'),         arch2Status:val('arch2Status'),
       bd:val('bd'),               bdStatus:val('bdStatus'),
       construct:val('construct'), constructStatus:val('constructStatus'),
       sales:val('sales'),         salesStatus:val('salesStatus'),
@@ -711,7 +704,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   setRadio('status',c.status||'Pre-Book');
   switchType();
 
-  ['arch1','arch1Status','arch2','arch2Status','bd','bdStatus','construct','constructStatus','sales','salesStatus']
+  ['arch1','arch1Status','bd','bdStatus','construct','constructStatus','sales','salesStatus']
     .forEach(k=>{
       const el=$(k); if(!el) return;
       el.value=c.responsible?.[k]||'';
@@ -749,9 +742,8 @@ const TMPL_COLS = [
   {h:'ความต้องการพิเศษ',        k:'requirements'},
   {h:'Architect 1',             k:'arch1'},
   {h:'สถานะออกแบบ A1',         k:'arch1Status', note:'Concept Design 1 / Concept Design 2 / Prelim Design / Design Develop / For Permit / For Const'},
-  {h:'Architect 2',             k:'arch2'},
-  {h:'สถานะออกแบบ A2',         k:'arch2Status', note:'Concept Design 1 / Concept Design 2 / Prelim Design / Design Develop / For Permit / For Const'},
   {h:'BD',                      k:'bd'},
+  {h:'สถานะงาน BD',             k:'bdStatus',   note:'N/A / On Process / Support / Market & Finance'},
   {h:'Construction',            k:'construct'},
   {h:'Sales',                   k:'sales'},
 ];
@@ -769,7 +761,7 @@ function downloadTemplate(){
     'Booked','House',
     '100','320','8500000','9500000',
     'ต้องการ Smart Home และสระว่ายน้ำ',
-    'นายวิชัย','Prelim Design','นางสาวมาลี','Concept Design 2','นายสมศักดิ์','นายชัยยา','นางสาวนิภา'
+    'นายวิชัย','Prelim Design','นายสมศักดิ์','On Process','นายชัยยา','นางสาวนิภา'
   ];
   const ws = XLSX.utils.aoa_to_sheet([headers, notes, sample]);
   ws['!cols'] = TMPL_COLS.map(()=>({wch:26}));
@@ -885,7 +877,7 @@ function confirmImport(){
       bFloors:'', bUnits:'', bLifts:'', bAir:'', bFurniture:'', bWaterHeater:'', bExtra:'',
       requirements:row.requirements,
       pitchPrice:(row.pitchPrice||'').replace(/,/g,''), pitchPricePerSqm:'',
-      responsible:{arch1:row.arch1, arch1Status:row.arch1Status||'', arch2:row.arch2, arch2Status:row.arch2Status||'', bd:row.bd, construct:row.construct, sales:row.sales},
+      responsible:{arch1:row.arch1, arch1Status:row.arch1Status||'', bd:row.bd, bdStatus:row.bdStatus||'', construct:row.construct, sales:row.sales},
       attachments:[], pitchFiles:[],
       createdAt:now(), updatedAt:now()
     });

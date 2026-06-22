@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Customer Cards — Construction CRM</title>
+<title>Customer Cards — IHC-BD&amp;PD Dashboard</title>
 <style>
 :root {
   --primary:#0066cc; --primary-lt:#e8f0fb; --primary-dk:#0054aa;
@@ -146,12 +146,12 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
 <body>
 
 <nav class="topnav">
-  <a href="dashboard.html" class="topnav-logo">Construction CRM</a>
+  <a href="dashboard.html" class="topnav-logo">IHC-BD&amp;PD Dashboard</a>
   <button class="nav-toggle" onclick="document.getElementById('topnavLinks').classList.toggle('open')" aria-label="เมนู">☰</button>
   <div class="topnav-links" id="topnavLinks">
     <a href="dashboard.html" class="ni">Dashboard</a>
-    <a href="customer-form.html" class="ni">New Customer</a>
-    <a href="customer-card.html" class="ni cur">Cards</a>
+    <a href="dashboard-status.html" class="ni">Project Status</a>
+    <a href="customer-card.html" class="ni cur">Customers</a>
     <a href="customer-form.html" class="nb">+ เพิ่มลูกค้า</a>
   </div>
 </nav>
@@ -193,7 +193,7 @@ const DB_KEY = 'crm_customers';
 const STATUSES = ['Non-Poten','Pre-Book','Booked','Contracted','Construction','Handover'];
 const SC = {'Non-Poten':'np2','Pre-Book':'pb','Booked':'bk','Contracted':'ct2','Construction':'cs2','Handover':'hv2'};
 const TEAM_COLORS = ['#0066cc','#34c759','#ff9500','#5856d6','#ff3b30'];
-const TEAM_ROLES  = [['arch1','Arch 1'],['arch2','Arch 2'],['bd','BD'],['construct','Construct'],['sales','Sales']];
+const TEAM_ROLES  = [['arch1','Arch 1'],['bd','BD'],['construct','Construct'],['sales','Sales']];
 const SHORT_STATUS = ['Non-Poten','Pre-Book','Booked','Contract.','Construct.','Handover'];
 
 function getDB(){ try{return JSON.parse(localStorage.getItem(DB_KEY))||[];}catch{return[];} }
@@ -257,11 +257,12 @@ function buildCard(c){
     <div class="fsec">ความต้องการพิเศษ / ข้อจำกัด</div>
     <div class="fv pre" style="font-size:11px">${esc(c.requirements)}</div>` : '';
 
-  const SC_RESP={'รอดำเนินการ':'#8e8e93','กำลังดำเนินการ':'#0066cc','รอพิจารณา':'#ff9500','เสร็จสิ้น':'#34c759'};
+  const SC_RESP={'รอดำเนินการ':'#8e8e93','กำลังดำเนินการ':'#0066cc','รอพิจารณา':'#ff9500','เสร็จสิ้น':'#34c759',
+    'N/A':'#c7c7cc','On Process':'#0066cc','Support':'#ff9500','Market & Finance':'#5856d6'};
   const teamChips = TEAM_ROLES.map(([k,label],i)=>{
     const name=c.responsible?.[k]; if(!name) return '';
     const st=c.responsible?.[k+'Status'];
-    const stBadge=st?`<span style="font-size:8px;padding:1px 5px;border-radius:9999px;background:${SC_RESP[st]||'#8e8e93'};color:#fff;font-weight:600">${st}</span>`:'';
+    const stBadge=(st&&st!=='N/A')?`<span style="font-size:8px;padding:1px 5px;border-radius:9999px;background:${SC_RESP[st]||'#8e8e93'};color:#fff;font-weight:600">${st}</span>`:'';
     return `<div class="tchip"><span class="tchip-av" style="background:${TEAM_COLORS[i]}">${ini(name)}</span>${esc(name)}<span style="font-size:9px;color:var(--ink-muted)">(${label})</span>${stBadge}</div>`;
   }).join('');
 
