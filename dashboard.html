@@ -215,6 +215,11 @@ tbody tr:hover td{background:#fafafa}
       <p id="lastUpdate">—</p>
     </div>
     <div class="phd-act">
+      <label class="btn btn-outline" style="cursor:pointer">
+        Import/Update Excel
+        <input type="file" accept=".xlsx,.xls" style="display:none" onchange="importCustomersExcel(this.files[0]);this.value=''">
+      </label>
+      <button class="btn btn-outline" onclick="exportCustomersExcel()">Export Excel</button>
       <a href="customer-form.html" class="btn btn-primary">+ เพิ่มลูกค้าใหม่</a>
     </div>
   </div>
@@ -304,7 +309,9 @@ tbody tr:hover td{background:#fafafa}
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="filestore.js"></script>
+<script src="export-excel.js"></script>
 <script>
 const DB_KEY = 'crm_customers';
 let _modalCust = null;

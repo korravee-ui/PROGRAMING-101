@@ -202,6 +202,11 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
         <option>House</option><option>Apartment</option><option>Condo</option>
         <option>Hotel</option><option>Others</option>
       </select>
+      <label class="btn btn-outline" style="cursor:pointer">
+        Import/Update Excel
+        <input type="file" accept=".xlsx,.xls" style="display:none" onchange="importCustomersExcel(this.files[0]);this.value=''">
+      </label>
+      <button class="btn btn-outline" onclick="exportCustomersExcel()">Export Excel</button>
       <button class="btn btn-outline" onclick="window.print()">Print</button>
       <a href="customer-form.html" class="btn btn-primary">+ เพิ่มลูกค้า</a>
     </div>
@@ -216,7 +221,9 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="filestore.js"></script>
+<script src="export-excel.js"></script>
 <script>
 const DB_KEY = 'crm_customers';
 const STATUSES = ['Non-Poten','Pre-Book','Booked','Contracted','Construction','Handover'];
