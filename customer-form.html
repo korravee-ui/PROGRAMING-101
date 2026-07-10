@@ -527,13 +527,17 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
 
 <div class="toast" id="toast"><span id="toastMsg"></span></div>
 
+<script src="filestore.js"></script>
 <script>
 const DB_KEY = 'crm_customers';
 let attachments=[], pitchFiles=[], editId=null;
 
 const $ = id => document.getElementById(id);
 function getDB(){ try{return JSON.parse(localStorage.getItem(DB_KEY))||[];}catch{return [];} }
-function setDB(a){ localStorage.setItem(DB_KEY,JSON.stringify(a)); }
+function setDB(a){
+  try{ localStorage.setItem(DB_KEY,JSON.stringify(a)); return true; }
+  catch(e){ toast('⚠ บันทึกไม่ได้: พื้นที่จัดเก็บเต็ม ลองลดขนาดหรือจำนวนไฟล์แนบ'); return false; }
+}
 function val(id){ return $(id)?.value||''; }
 function now(){ return new Date().toISOString().split('T')[0]; }
 function genId(){ return `CRM-${new Date().getFullYear()}-${(getDB().length+1).toString().padStart(4,'0')}`; }
@@ -562,17 +566,33 @@ function openMap(e){
   $('mapOpenBtn').href=u;
 }
 
-// ── Generic file reader ──
+// ── Generic file reader (base64 — images & small files) ──
 function readF(file,maxMB,cb){
   if(file.size>maxMB*1024*1024){toast(`ไฟล์ใหญ่เกิน ${maxMB}MB: ${file.name}`);return;}
   const r=new FileReader();
   r.onload=e=>cb({name:file.name,type:file.type,size:file.size,data:e.target.result});
   r.readAsDataURL(file);
 }
+// ── IDB file reader (ArrayBuffer — large PDFs) ──
+function readFIDB(file,maxMB,cb){
+  if(file.size>maxMB*1024*1024){toast(`ไฟล์ใหญ่เกิน ${maxMB}MB: ${file.name}`);return;}
+  const r=new FileReader();
+  r.onload=async e=>{
+    const key=fileStore.genKey();
+    try{ await fileStore.save(key,e.target.result); }
+    catch(err){ toast('บันทึกไฟล์ไม่สำเร็จ'); return; }
+    cb({key,name:file.name,type:file.type,size:file.size,storageType:'idb'});
+  };
+  r.readAsArrayBuffer(file);
+}
 
-// ── Main attachments ──
-setupDrop('uploadZone', files=>Array.from(files).forEach(f=>readF(f,5,o=>{attachments.push(o);renderImgGrid();})));
-function handleFiles(files){Array.from(files).forEach(f=>readF(f,5,o=>{attachments.push(o);renderImgGrid();}));}
+// ── Main attachments (images→base64, PDFs→IDB) ──
+function _addAttachFile(f){
+  if(f.type.startsWith('image/')){ readF(f,5,o=>{attachments.push(o);renderImgGrid();}); }
+  else { readFIDB(f,20,o=>{attachments.push(o);renderImgGrid();}); }
+}
+setupDrop('uploadZone', files=>Array.from(files).forEach(_addAttachFile));
+function handleFiles(files){Array.from(files).forEach(_addAttachFile);}
 function renderImgGrid(){
   const g=$('previewGrid'); g.innerHTML='';
   attachments.forEach((f,i)=>{
@@ -580,14 +600,26 @@ function renderImgGrid(){
     d.innerHTML = f.type.startsWith('image/')
       ? `<img src="${f.data}" alt="${f.name}">`
       : `<div class="pdf-tile"><span class="pdf-tile-icon">📄</span><span class="pdf-tile-name">${f.name}</span></div>`;
-    d.innerHTML+=`<button type="button" class="img-rm" onclick="attachments.splice(${i},1);renderImgGrid()">✕</button>`;
+    d.innerHTML+=`<button type="button" class="img-rm" onclick="rmAttachment(${i})">✕</button>`;
     g.appendChild(d);
   });
 }
+async function rmAttachment(i){
+  const f=attachments[i];
+  if(f.storageType==='idb'&&f.key) await fileStore.remove([f.key]);
+  attachments.splice(i,1);
+  renderImgGrid();
+}
 
-// ── Pitch deck ──
-setupDrop('pitchZone', files=>Array.from(files).forEach(f=>{if(!f.type.includes('pdf')){toast('รองรับเฉพาะ PDF');return;}readF(f,10,o=>{pitchFiles.push(o);renderList('pitchList',pitchFiles,'pitchFiles');});}));
-function handlePitchFiles(files){Array.from(files).forEach(f=>{if(!f.type.includes('pdf')){toast('รองรับเฉพาะ PDF');return;}readF(f,10,o=>{pitchFiles.push(o);renderList('pitchList',pitchFiles,'pitchFiles');});});}
+// ── Pitch deck (IDB — supports large PDFs up to 50 MB) ──
+setupDrop('pitchZone', files=>Array.from(files).forEach(f=>{
+  if(!f.type.includes('pdf')){toast('รองรับเฉพาะ PDF');return;}
+  readFIDB(f,50,o=>{pitchFiles.push(o);renderList('pitchList',pitchFiles,'pitchFiles');});
+}));
+function handlePitchFiles(files){Array.from(files).forEach(f=>{
+  if(!f.type.includes('pdf')){toast('รองรับเฉพาะ PDF');return;}
+  readFIDB(f,50,o=>{pitchFiles.push(o);renderList('pitchList',pitchFiles,'pitchFiles');});
+});}
 
 // ── Generic file list renderer ──
 function renderList(cid, arr, arrName){
@@ -602,8 +634,24 @@ function renderList(cid, arr, arrName){
     el.appendChild(row);
   });
 }
-function openFData(n,i){const a=pitchFiles;const w=window.open();w.document.write(`<iframe src="${a[i].data}" style="width:100%;height:100%;border:none"></iframe>`);}
-function delFItem(n,i){pitchFiles.splice(i,1);renderList('pitchList',pitchFiles,'pitchFiles');}
+async function openFData(n,i){
+  const f=pitchFiles[i];
+  if(f.storageType==='idb'){
+    const url=await fileStore.openUrl(f);
+    if(!url){toast('ไม่พบไฟล์ใน IndexedDB');return;}
+    const w=window.open(url,'_blank');
+    if(w) setTimeout(()=>URL.revokeObjectURL(url),60000);
+  } else {
+    const w=window.open('','_blank');
+    w.document.write(`<iframe src="${f.data}" style="width:100%;height:100%;border:none"></iframe>`);
+  }
+}
+async function delFItem(n,i){
+  const f=pitchFiles[i];
+  if(f.storageType==='idb'&&f.key) await fileStore.remove([f.key]);
+  pitchFiles.splice(i,1);
+  renderList('pitchList',pitchFiles,'pitchFiles');
+}
 
 // ── Drag-drop helper ──
 function setupDrop(id,cb){
@@ -618,7 +666,6 @@ function saveCustomer(e){
   e.preventDefault();
   const type=document.querySelector('input[name="productType"]:checked')?.value||'';
   const status=document.querySelector('input[name="status"]:checked')?.value||'Pre-Book';
-  const archStyle=document.querySelector('input[name="archStyle"]:checked')?.value||'';
 
   const customer={
     id:editId||genId(),
@@ -630,19 +677,16 @@ function saveCustomer(e){
     productType:type,status,
     landArea:val('landArea'),area:val('area'),
     budget:val('budget'),budgetPerSqm:val('budgetPerSqm'),
-    // House
     hFloors:val('hFloors'),hBedrooms:val('hBedrooms'),hBathrooms:val('hBathrooms'),
     hParking:val('hParking'),hExtra:val('hExtra'),
-    // Building
     bFloors:val('bFloors'),bUnits:val('bUnits'),bLifts:val('bLifts'),
     bAir:val('bAir'),bFurniture:val('bFurniture'),bWaterHeater:val('bWaterHeater'),bExtra:val('bExtra'),
     requirements:val('requirements'),
     pitchPrice:val('pitchPrice'),pitchPricePerSqm:val('pitchPricePerSqm'),
     responsible:{
-      arch1:val('arch1'),         arch1Status:val('arch1Status'),
-      bd:val('bd'),               bdStatus:val('bdStatus'),
-      construct:val('construct'), constructStatus:val('constructStatus'),
-      sales:val('sales'),         salesStatus:val('salesStatus'),
+      arch1:val('arch1'),arch1Status:val('arch1Status'),
+      bd:val('bd'),bdStatus:val('bdStatus'),
+      construct:val('construct'),sales:val('sales'),
     },
     attachments,pitchFiles,
     createdAt:editId?(getDB().find(c=>c.id===editId)?.createdAt||now()):now(),
@@ -652,9 +696,10 @@ function saveCustomer(e){
   const arr=getDB();
   if(editId){const idx=arr.findIndex(c=>c.id===editId);if(idx>-1)arr[idx]=customer;else arr.push(customer);}
   else arr.push(customer);
-  setDB(arr);
-  toast(editId?'อัปเดตเรียบร้อย':'บันทึกเรียบร้อย');
-  resetForm();
+
+  if(!setDB(arr)) return;
+  toast(editId?'✓ อัปเดตเรียบร้อย':'✓ บันทึกเรียบร้อย');
+  setTimeout(()=>window.location.href='customer-card.html', 1200);
 }
 
 function resetForm(){
@@ -669,13 +714,18 @@ function resetForm(){
 }
 function cancelEdit(){resetForm();}
 
-function deleteAllCustomers(){
-  const count = getDB().length;
-  if(!count){ toast('ไม่มีข้อมูลลูกค้า'); return; }
-  if(!confirm(`ยืนยันลบข้อมูลลูกค้าทั้งหมด ${count} รายการ?\n\nการกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
+async function deleteAllCustomers(){
+  const data=getDB();
+  if(!data.length){ toast('ไม่มีข้อมูลลูกค้า'); return; }
+  if(!confirm(`ยืนยันลบข้อมูลลูกค้าทั้งหมด ${data.length} รายการ?\n\nการกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
+  const idbKeys=data.flatMap(c=>[
+    ...(c.attachments||[]).filter(f=>f.storageType==='idb'&&f.key).map(f=>f.key),
+    ...(c.pitchFiles||[]).filter(f=>f.storageType==='idb'&&f.key).map(f=>f.key),
+  ]);
+  if(idbKeys.length) await fileStore.remove(idbKeys);
   setDB([]);
   resetForm();
-  toast(`ลบข้อมูลทั้งหมด ${count} รายการเรียบร้อย`);
+  toast(`ลบข้อมูลทั้งหมด ${data.length} รายการเรียบร้อย`);
 }
 
 // ── Load for edit ──
@@ -883,9 +933,10 @@ function confirmImport(){
     });
     imported++;
   });
-  setDB(arr);
-  toast(`Import เรียบร้อย ${imported} รายการ`);
+  if(!setDB(arr)) return;
+  toast(`✓ Import เรียบร้อย ${imported} รายการ`);
   cancelImport();
+  setTimeout(()=>window.location.href='customer-card.html', 1200);
 }
 
 function cancelImport(){
@@ -898,5 +949,6 @@ function cancelImport(){
 function showImportErr(msg){ $('importErrMsg').textContent=msg; $('importErrMsg').style.display='block'; }
 function hideImportErr(){ $('importErrMsg').style.display='none'; }
 </script>
+
 </body>
 </html>

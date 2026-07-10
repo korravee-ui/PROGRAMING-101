@@ -60,10 +60,25 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
 .card-hd-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.65rem}
 .cname{font-size:15px;font-weight:600;letter-spacing:-.1px;line-height:1.3}
 .ccompany{font-size:10px;color:rgba(255,255,255,.5);margin-top:.15rem}
-.badge{display:inline-flex;align-items:center;gap:.25rem;padding:3px 9px;border-radius:var(--r-pill);font-size:10px;font-weight:600;color:#fff;white-space:nowrap;flex-shrink:0}
-.badge::before{content:"";width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.5);flex-shrink:0}
-.np2{background:var(--c-np)} .pb{background:var(--c-pb)} .bk{background:var(--c-bk)}
-.ct2{background:var(--c-ct)} .cs2{background:var(--c-cs)} .hv2{background:var(--c-hv)}
+
+/* STATUS SELECT (replaces static badge) */
+.status-sel{
+  -webkit-appearance:none;appearance:none;
+  border:none;border-radius:var(--r-pill);
+  padding:3px 20px 3px 9px;
+  font-size:10px;font-weight:600;color:#fff;cursor:pointer;outline:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4'%3E%3Cpath d='M0 0l3.5 4L7 0z' fill='rgba(255,255,255,.75)'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 6px center;
+  flex-shrink:0;transition:opacity .15s;
+}
+.status-sel:hover{opacity:.85}
+.status-sel option{color:var(--ink);background:var(--canvas);font-weight:500}
+.status-sel.np2{background-color:var(--c-np)}
+.status-sel.pb {background-color:var(--c-pb)}
+.status-sel.bk {background-color:var(--c-bk)}
+.status-sel.ct2{background-color:var(--c-ct)}
+.status-sel.cs2{background-color:var(--c-cs)}
+.status-sel.hv2{background-color:var(--c-hv)}
 
 /* PROGRESS */
 .progress{display:flex;gap:3px;margin-bottom:.5rem}
@@ -99,17 +114,30 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
 .tchip{display:inline-flex;align-items:center;gap:.3rem;padding:2px 8px 2px 3px;border-radius:var(--r-pill);background:var(--bg);border:1px solid var(--border);font-size:10px;color:var(--ink);line-height:1.5}
 .tchip-av{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0}
 
-/* PHOTO PREVIEW STRIP */
-.photo-strip{display:flex;gap:.5rem;padding:.75rem 1.25rem;border-top:1px solid var(--border-soft)}
-.photo-wrap{flex:1;min-width:0;position:relative;border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--border);background:var(--bg)}
-.photo-thumb{width:100%;height:90px;object-fit:cover;display:block;cursor:pointer;transition:opacity .15s}
-.photo-thumb:hover{opacity:.88}
-.photo-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;letter-spacing:-.5px;cursor:default}
+/* ATTACHMENT STRIP */
+.attach-strip{display:flex;flex-wrap:wrap;gap:.4rem;padding:.75rem 1.25rem;border-top:1px solid var(--border-soft)}
+.attach-item{position:relative;border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--border);background:var(--bg);cursor:pointer;flex-shrink:0}
+.attach-item img{width:80px;height:70px;object-fit:cover;display:block}
+.attach-pdf{width:80px;height:70px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;padding:.3rem}
+.attach-pdf-icon{font-size:1.4rem}
+.attach-pdf-name{font-size:8px;color:var(--ink-muted);text-align:center;word-break:break-all;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;max-width:72px}
+.attach-del{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;border:none;cursor:pointer;font-size:8px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;line-height:1}
+.attach-item:hover .attach-del{opacity:1}
+.attach-add{width:80px;height:70px;display:flex;align-items:center;justify-content:center;border:1.5px dashed var(--border);border-radius:var(--r-sm);cursor:pointer;font-size:22px;color:var(--ink-muted);background:var(--bg);transition:all .15s;position:relative;flex-shrink:0}
+.attach-add:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-lt)}
+.attach-add input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+/* PITCH FILE LIST */
+.pitch-list{padding:.1rem 0 .25rem}
+.pitch-frow{display:flex;align-items:center;gap:.45rem;padding:.3rem .5rem;border-radius:6px;background:var(--bg);margin-bottom:.3rem;font-size:11px}
+.pitch-frow span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-soft)}
+.pitch-frow button{padding:2px 9px;border:none;border-radius:var(--r-pill);background:var(--primary-lt);color:var(--primary);font-size:10px;cursor:pointer;flex-shrink:0;transition:all .12s}
+.pitch-frow button:hover{background:var(--primary);color:#fff}
 
 /* CARD FOOTER */
 .card-foot{padding:.7rem 1.25rem;border-top:1px solid var(--border-soft);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:auto}
 .cdate{font-size:10px;color:var(--ink-muted);line-height:1.6}
-.card-actions{display:flex;gap:.35rem}
+.card-actions{display:flex;gap:.35rem;align-items:center}
 .abtn{padding:4px 12px;border-radius:var(--r-pill);font-size:11px;font-weight:500;cursor:pointer;border:none;transition:all .12s;text-decoration:none;display:inline-block}
 .av{background:var(--primary-lt);color:var(--primary)} .av:hover{background:var(--primary);color:#fff}
 .ad{background:#ffeeed;color:var(--red)} .ad:hover{background:var(--red);color:#fff}
@@ -120,7 +148,7 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
 
 /* PRINT */
 @media print{
-  .topnav,.toolbar,.card-actions,.abtn,.toast{display:none!important}
+  .topnav,.toolbar,.card-actions,.abtn,.toast,.attach-add,.attach-del{display:none!important}
   .shell{padding:0}
   .cards{grid-template-columns:repeat(2,1fr);gap:.75rem}
   .card{break-inside:avoid;border:1px solid #ccc}
@@ -188,18 +216,29 @@ html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-seri
 
 <div class="toast" id="toast"></div>
 
+<script src="filestore.js"></script>
 <script>
 const DB_KEY = 'crm_customers';
 const STATUSES = ['Non-Poten','Pre-Book','Booked','Contracted','Construction','Handover'];
 const SC = {'Non-Poten':'np2','Pre-Book':'pb','Booked':'bk','Contracted':'ct2','Construction':'cs2','Handover':'hv2'};
-const TEAM_COLORS = ['#0066cc','#34c759','#ff9500','#5856d6','#ff3b30'];
+const TEAM_COLORS = ['#0066cc','#34c759','#ff9500','#5856d6'];
 const TEAM_ROLES  = [['arch1','Arch 1'],['bd','BD'],['construct','Construct'],['sales','Sales']];
 const SHORT_STATUS = ['Non-Poten','Pre-Book','Booked','Contract.','Construct.','Handover'];
 
+// ── DB helpers ──
 function getDB(){ try{return JSON.parse(localStorage.getItem(DB_KEY))||[];}catch{return[];} }
-function fmt(n){ if(n==null||n==='') return null; return Number(n).toLocaleString('th-TH'); }
-const $ = id => document.getElementById(id);
+function setDB(a){
+  try{ localStorage.setItem(DB_KEY,JSON.stringify(a)); return true; }
+  catch(e){ showToast('⚠ บันทึกไม่ได้: พื้นที่จัดเก็บเต็ม ลองลดขนาดไฟล์แนบ'); return false; }
+}
+function today(){ return new Date().toISOString().split('T')[0]; }
 
+const $ = id => document.getElementById(id);
+function fmt(n){ if(n==null||n==='') return null; return Number(n).toLocaleString('th-TH'); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function ini(n){ return n.trim().split(/\s+/).slice(0,2).map(w=>w[0]?.toUpperCase()||'').join(''); }
+
+// ── Render ──
 function render(){
   const q  = $('searchBox').value.toLowerCase();
   const fs = $('fStatus').value;
@@ -216,6 +255,7 @@ function render(){
   grid.innerHTML = data.map(buildCard).join('');
 }
 
+// ── Build card HTML ──
 function buildCard(c){
   const si = STATUSES.indexOf(c.status);
   const bars   = STATUSES.map((_,i)=>`<div class="ps ${i<si?'done':i===si?'active':''}"></div>`).join('');
@@ -246,19 +286,23 @@ function buildCard(c){
       ${c.bExtra?`<div class="frow full"><div class="fl">คำขอเพิ่มเติม</div><div class="fv pre">${esc(c.bExtra)}</div></div>`:''}
     </div>` : '';
 
-  const pitchHtml = c.pitchPrice ? `
+  const _pitchFiles = c.pitchFiles||[];
+  const pitchFilesHtml = _pitchFiles.length ? `<div class="pitch-list">${_pitchFiles.map((pf,i)=>`
+    <div class="pitch-frow"><span>📄 ${esc(pf.name)}</span><button onclick="event.stopPropagation();openPitchFile('${c.id}',${i})">เปิด</button></div>`).join('')}</div>` : '';
+  const pitchHtml = (c.pitchPrice||_pitchFiles.length) ? `
     <div class="fsec">Pitch Deck</div>
     <div class="fg">
       ${f('ราคานำเสนอ', fmt(c.pitchPrice)?fmt(c.pitchPrice)+' บาท':null)}
       ${f('บาท/ตร.ม.', fmt(c.pitchPricePerSqm))}
-    </div>` : '';
+    </div>${pitchFilesHtml}` : '';
 
   const reqHtml = c.requirements ? `
     <div class="fsec">ความต้องการพิเศษ / ข้อจำกัด</div>
     <div class="fv pre" style="font-size:11px">${esc(c.requirements)}</div>` : '';
 
-  const SC_RESP={'รอดำเนินการ':'#8e8e93','กำลังดำเนินการ':'#0066cc','รอพิจารณา':'#ff9500','เสร็จสิ้น':'#34c759',
-    'N/A':'#c7c7cc','On Process':'#0066cc','Support':'#ff9500','Market & Finance':'#5856d6'};
+  const SC_RESP={'N/A':'#c7c7cc','On Process':'#0066cc','Support':'#ff9500','Market & Finance':'#5856d6',
+    'Concept Design 1':'#5856d6','Concept Design 2':'#5856d6','Prelim Design':'#ff9500',
+    'Design Develop':'#ff9500','For Permit':'#34c759','For Const':'#34c759'};
   const teamChips = TEAM_ROLES.map(([k,label],i)=>{
     const name=c.responsible?.[k]; if(!name) return '';
     const st=c.responsible?.[k+'Status'];
@@ -268,6 +312,11 @@ function buildCard(c){
 
   const fd = d => d?new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}):'—';
 
+  // Status dropdown (inline edit)
+  const statusOpts = STATUSES.map(s=>
+    `<option value="${s}"${c.status===s?' selected':''}>${s}</option>`
+  ).join('');
+
   return `<div class="card">
     <div class="card-hd">
       <div class="card-hd-top">
@@ -275,7 +324,9 @@ function buildCard(c){
           <div class="cname">${esc(c.name)}</div>
           ${c.company?`<div class="ccompany">${esc(c.company)}</div>`:''}
         </div>
-        <span class="badge ${SC[c.status]||'pb'}">${c.status}</span>
+        <select class="status-sel ${SC[c.status]||'pb'}" onchange="updateStatus('${c.id}',this.value)">
+          ${statusOpts}
+        </select>
       </div>
       <div class="progress">${bars}</div>
       <div class="psteps">${labels}</div>
@@ -315,7 +366,7 @@ function buildCard(c){
       ${teamChips?`<div class="fsec">Responsible Team</div><div class="team">${teamChips}</div>`:''}
     </div>
 
-    ${photoStrip(c.attachments)}
+    ${attachStrip(c)}
 
     <div class="card-foot">
       <div class="cdate">
@@ -331,26 +382,129 @@ function buildCard(c){
 }
 
 function f(label, val){ if(!val) return ''; return `<div class="frow"><div class="fl">${label}</div><div class="fv">${val}</div></div>`; }
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function ini(n){ return n.trim().split(/\s+/).slice(0,2).map(w=>w[0]?.toUpperCase()||'').join(''); }
 
-function photoStrip(attachments){
-  const imgs=(attachments||[]).filter(f=>f.type?.startsWith('image/'));
-  if(!imgs.length) return '';
-  const extra=Math.max(0,imgs.length-2);
-  const thumbs=imgs.slice(0,2).map((f,i)=>{
-    const overlay=(i===1&&extra>0)?`<div class="photo-overlay">+${extra}</div>`:'';
-    return `<div class="photo-wrap"><img class="photo-thumb" src="${f.data}" alt="" onclick="window.open('${f.data}')">${overlay}</div>`;
+// ── Attachment strip with upload + view + delete ──
+function attachStrip(c){
+  const files = c.attachments||[];
+  const items = files.map((att,i)=>{
+    const delBtn = `<button class="attach-del" onclick="event.stopPropagation();removeAttachment('${c.id}',${i})">✕</button>`;
+    if(att.type&&att.type.startsWith('image/')){
+      return `<div class="attach-item" onclick="viewAttach('${c.id}',${i})"><img src="${att.data}" alt="${esc(att.name)}">${delBtn}</div>`;
+    }
+    return `<div class="attach-item" onclick="viewAttach('${c.id}',${i})"><div class="attach-pdf"><span class="attach-pdf-icon">📄</span><span class="attach-pdf-name">${esc(att.name)}</span></div>${delBtn}</div>`;
   }).join('');
-  return `<div class="photo-strip">${thumbs}</div>`;
+
+  return `<div class="attach-strip">${items}<label class="attach-add" title="เพิ่มรูปภาพ / PDF (สูงสุด 5 MB)"><input type="file" accept="image/*,.pdf" onchange="addAttachment('${c.id}',this.files[0]);this.value=''">+</label></div>`;
 }
 
-function del(id){
-  if(!confirm('ลบข้อมูลลูกค้านี้?')) return;
-  localStorage.setItem(DB_KEY, JSON.stringify(getDB().filter(c=>c.id!==id)));
-  showToast('ลบข้อมูลเรียบร้อย'); render();
+// ── Inline status update ──
+function updateStatus(id, status){
+  const arr=getDB();
+  const idx=arr.findIndex(c=>c.id===id);
+  if(idx<0) return;
+  arr[idx].status=status;
+  arr[idx].updatedAt=today();
+  if(setDB(arr)){ showToast('✓ อัปเดตสถานะแล้ว'); render(); }
 }
-function showToast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+
+// ── Open pitch deck file ──
+async function openPitchFile(customerId, fileIdx){
+  const c=getDB().find(x=>x.id===customerId); if(!c) return;
+  const pf=(c.pitchFiles||[])[fileIdx]; if(!pf) return;
+  if(pf.storageType==='idb'){
+    const url=await fileStore.openUrl(pf);
+    if(!url){ showToast('ไม่พบไฟล์'); return; }
+    const w=window.open(url,'_blank');
+    if(w) setTimeout(()=>URL.revokeObjectURL(url),60000);
+  } else {
+    const w=window.open('','_blank');
+    w.document.write(`<iframe src="${pf.data}" style="width:100%;height:100%;border:none"></iframe>`);
+  }
+}
+
+// ── Attachment: add (images→base64, PDFs→IDB) ──
+function addAttachment(id, file){
+  if(!file) return;
+  const isPdf = file.type.includes('pdf');
+  const maxMB = isPdf ? 20 : 5;
+  if(file.size>maxMB*1024*1024){ showToast(`⚠ ไฟล์ใหญ่เกิน ${maxMB} MB`); return; }
+  const arr=getDB();
+  const idx=arr.findIndex(c=>c.id===id);
+  if(idx<0) return;
+  if(!arr[idx].attachments) arr[idx].attachments=[];
+  const reader=new FileReader();
+  if(isPdf){
+    reader.onload=async e=>{
+      const key=fileStore.genKey();
+      try{ await fileStore.save(key,e.target.result); }
+      catch{ showToast('บันทึกไฟล์ไม่สำเร็จ'); return; }
+      arr[idx].attachments.push({key,name:file.name,type:file.type,size:file.size,storageType:'idb'});
+      arr[idx].updatedAt=today();
+      if(setDB(arr)){ showToast('✓ เพิ่มไฟล์เรียบร้อย'); render(); }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    reader.onload=e=>{
+      arr[idx].attachments.push({name:file.name,type:file.type,size:file.size,data:e.target.result});
+      arr[idx].updatedAt=today();
+      if(setDB(arr)){ showToast('✓ เพิ่มไฟล์เรียบร้อย'); render(); }
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+// ── Attachment: remove ──
+async function removeAttachment(id, attIdx){
+  if(!confirm('ลบไฟล์นี้?')) return;
+  const arr=getDB();
+  const idx=arr.findIndex(c=>c.id===id);
+  if(idx<0) return;
+  const att=arr[idx].attachments[attIdx];
+  if(att.storageType==='idb'&&att.key) await fileStore.remove([att.key]);
+  arr[idx].attachments.splice(attIdx,1);
+  arr[idx].updatedAt=today();
+  if(setDB(arr)){ showToast('✓ ลบไฟล์แล้ว'); render(); }
+}
+
+// ── Attachment: view ──
+async function viewAttach(id, attIdx){
+  const c=getDB().find(x=>x.id===id);
+  if(!c||!c.attachments?.[attIdx]) return;
+  const att=c.attachments[attIdx];
+  if(att.storageType==='idb'){
+    const url=await fileStore.openUrl(att);
+    if(!url){ showToast('ไม่พบไฟล์'); return; }
+    const w=window.open(url,'_blank');
+    if(w) setTimeout(()=>URL.revokeObjectURL(url),60000);
+  } else {
+    const w=window.open('','_blank');
+    if(att.type&&att.type.startsWith('image/')){
+      w.document.write(`<!DOCTYPE html><html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${att.data}" style="max-width:100%;max-height:100vh;object-fit:contain"></body></html>`);
+    } else {
+      w.document.write(`<!DOCTYPE html><html><body style="margin:0"><iframe src="${att.data}" style="width:100%;height:100vh;border:none"></iframe></body></html>`);
+    }
+  }
+}
+
+// ── Delete customer ──
+async function del(id){
+  if(!confirm('ลบข้อมูลลูกค้านี้?')) return;
+  const c=getDB().find(x=>x.id===id);
+  if(c){
+    const idbKeys=[
+      ...(c.attachments||[]).filter(f=>f.storageType==='idb'&&f.key).map(f=>f.key),
+      ...(c.pitchFiles||[]).filter(f=>f.storageType==='idb'&&f.key).map(f=>f.key),
+    ];
+    if(idbKeys.length) await fileStore.remove(idbKeys);
+  }
+  const arr=getDB().filter(x=>x.id!==id);
+  if(setDB(arr)){ showToast('✓ ลบข้อมูลเรียบร้อย'); render(); }
+}
+
+function showToast(msg){
+  const t=$('toast'); t.textContent=msg;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500);
+}
 
 window.addEventListener('DOMContentLoaded', render);
 window.addEventListener('storage', render);

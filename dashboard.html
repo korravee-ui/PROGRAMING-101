@@ -304,8 +304,10 @@ tbody tr:hover td{background:#fafafa}
 
 <div class="toast" id="toast"></div>
 
+<script src="filestore.js"></script>
 <script>
 const DB_KEY = 'crm_customers';
+let _modalCust = null;
 const STATUSES = ['Non-Poten','Pre-Book','Booked','Contracted','Construction','Handover'];
 const DISPLAY_ORDER = ['Handover','Construction','Contracted','Booked','Pre-Book','Non-Poten'];
 const TYPES    = ['House','Apartment','Condo','Hotel','Others'];
@@ -731,21 +733,23 @@ function openModal(id){
     </div>
     ${c.bExtra?`<div class="mf full"><div class="ml">คำขอเพิ่มเติม</div><div class="mv">${c.bExtra}</div></div>`:''}`:''
 
-  const pitchHtml = (c.pitchPrice||c.pitchFiles?.length)?`
+  _modalCust = c;
+
+  const pitchHtml = (c.pitchPrice||(c.pitchFiles||[]).length)?`
     <div class="msec">Pitch Deck</div>
     <div class="mgrid">
       ${mf('ราคานำเสนอ',c.pitchPrice?fmt(c.pitchPrice)+' บาท':'')}
       ${mf('บาท/ตร.ม.',c.pitchPricePerSqm?fmt(c.pitchPricePerSqm):'—')}
     </div>
-    ${(c.pitchFiles||[]).length?`<div class="attach-grid">${c.pitchFiles.map(f=>`
-      <div class="att" onclick="openFile('${f.data}')"><div class="att-pdf"><span>📄</span><span>${f.name}</span></div></div>`).join('')}</div>`:''}`:''
+    ${(c.pitchFiles||[]).length?`<div class="attach-grid">${c.pitchFiles.map((f,i)=>`
+      <div class="att" onclick="openModalPitch(${i})"><div class="att-pdf"><span>📄</span><span>${f.name}</span></div></div>`).join('')}</div>`:''}`:''
 
   const attHtml = (c.attachments||[]).length?`
     <div class="msec">ไฟล์แนบ (${c.attachments.length})</div>
-    <div class="attach-grid">${c.attachments.map(f=>
+    <div class="attach-grid">${c.attachments.map((f,i)=>
       f.type?.startsWith('image/')
-        ?`<div class="att" onclick="window.open('${f.data}')"><img src="${f.data}" alt="${f.name}"></div>`
-        :`<div class="att" onclick="openFile('${f.data}')"><div class="att-pdf"><span>📄</span><span>${f.name}</span></div></div>`
+        ?`<div class="att" onclick="openModalAttach(${i})"><img src="${f.data}" alt="${f.name}"></div>`
+        :`<div class="att" onclick="openModalAttach(${i})"><div class="att-pdf"><span>📄</span><span>${f.name}</span></div></div>`
     ).join('')}</div>`:'';
 
   $('mbody').innerHTML=`
@@ -801,13 +805,41 @@ function mfr(l,name,status){
   const badge=(status&&status!=='N/A')?`<span style="font-size:9px;padding:1px 7px;border-radius:9999px;background:${SC_RESP[status]||'#8e8e93'};color:#fff;font-weight:600;margin-left:.4rem">${status}</span>`:'';
   return `<div class="mf"><div class="ml">${l}</div><div class="mv" style="display:flex;align-items:center;flex-wrap:wrap;gap:.2rem">${name}${badge}</div></div>`;
 }
-function openFile(d){ const w=window.open();w.document.write(`<iframe src="${d}" style="width:100%;height:100%;border:none"></iframe>`); }
+async function _openFileMeta(meta){
+  if(meta.storageType==='idb'){
+    const url=await fileStore.openUrl(meta);
+    if(!url){toast('ไม่พบไฟล์'); return;}
+    const w=window.open(url,'_blank');
+    if(w) setTimeout(()=>URL.revokeObjectURL(url),60000);
+  } else {
+    const w=window.open('','_blank');
+    if(meta.type?.startsWith('image/')){
+      w.document.write(`<!DOCTYPE html><html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${meta.data}" style="max-width:100%;max-height:100vh;object-fit:contain"></body></html>`);
+    } else {
+      w.document.write(`<iframe src="${meta.data}" style="width:100%;height:100%;border:none"></iframe>`);
+    }
+  }
+}
+async function openModalPitch(i){
+  const f=(_modalCust?.pitchFiles||[])[i]; if(f) _openFileMeta(f);
+}
+async function openModalAttach(i){
+  const f=(_modalCust?.attachments||[])[i]; if(f) _openFileMeta(f);
+}
 function closeModal(){ $('mbg').classList.remove('show'); }
 function closeMBg(e){ if(e.target===$('mbg')) closeModal(); }
 
-function deleteCustomer(id){
+async function deleteCustomer(id){
   if(!confirm('ลบข้อมูลลูกค้านี้?')) return;
-  localStorage.setItem(DB_KEY,JSON.stringify(getDB().filter(c=>c.id!==id)));
+  const c=getDB().find(x=>x.id===id);
+  if(c){
+    const idbKeys=[
+      ...(c.attachments||[]).filter(f=>f.storageType==='idb'&&f.key).map(f=>f.key),
+      ...(c.pitchFiles||[]).filter(f=>f.storageType==='idb'&&f.key).map(f=>f.key),
+    ];
+    if(idbKeys.length) await fileStore.remove(idbKeys);
+  }
+  localStorage.setItem(DB_KEY,JSON.stringify(getDB().filter(x=>x.id!==id)));
   closeModal(); toast('ลบข้อมูลเรียบร้อย'); render();
 }
 
@@ -819,5 +851,7 @@ function toast(msg){
 window.addEventListener('DOMContentLoaded',render);
 window.addEventListener('storage',render);
 </script>
+
+
 </body>
 </html>
