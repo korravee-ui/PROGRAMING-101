@@ -15,8 +15,7 @@ Your IHC Dashboard now has:
 
 ```
 📁 PROGRAMING-101/
-├── 📄 index.html                 (Home/Dashboard intro)
-├── 📄 dashboard.html             (Main dashboard - analytics)
+├── 📄 index.html                 (Main dashboard - analytics)
 ├── 📄 dashboard-status.html      (Project status tracker)
 ├── 📄 customer-card.html         (Customer cards list)
 ├── 📄 customer-form.html         (Add/Edit customers)
@@ -83,7 +82,7 @@ Password: `Demo123456`
 ### Architecture
 ```
 ┌─────────────────┐
-│   Browser       │  (index.html, dashboard.html, etc.)
+│   Browser       │  (index.html, dashboard-status.html, etc.)
 │   (Frontend)    │
 └────────┬────────┘
          │
@@ -122,8 +121,7 @@ Password: `Demo123456`
 ### Dashboard Pages
 | Page | Purpose | Data Source |
 |------|---------|-------------|
-| index.html | Home/intro | Static + auth check |
-| dashboard.html | KPI analytics | Firestore |
+| index.html | KPI analytics | Firestore |
 | dashboard-status.html | Project phases | Firestore |
 | customer-card.html | Customer list | Firestore |
 | customer-form.html | Add/edit records | Firestore + localStorage |
